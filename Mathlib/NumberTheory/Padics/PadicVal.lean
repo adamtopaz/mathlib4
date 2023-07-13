@@ -42,8 +42,12 @@ quotients `n / p ^ i`. This sum is expressed over the finset `Ico 1 b` where `b`
 greater than `log p n`. See `Nat.Prime.multiplicity_factorial` for the corresponding theorem on
 multiplcity.
 
-* padicValNat_factorial'`: Legendre's Theorem.  Taking (`p - 1`) times the `p`-adic valuation
+* `padicValNat_factorial'`: Legendre's Theorem. Taking (`p - 1`) times the `p`-adic valuation
 of `n!` equals `n` minus the sum of base `p` digits of `n`.
+
+* `padicValNat_choose'`: Kummer's Theorem. Taking (`p - 1`) times the  `p`-adic valuation of the
+binomial `n` over `k` equals the sum of the digits of `k` plus the sum of the digits of `n - k`
+minus the sum of digits of `n`, all base `p`.
 
 ## References
 
@@ -615,6 +619,27 @@ theorem padicValNat_factorial' {p : ℕ} [hp : Fact p.Prime] (n : ℕ):
       exact List.foldl_assoc_comm_cons
     rw [add_comm, ← padicValNat_factorial_mul (n / p)]
     exact padicValNat_factorial_div n
+
+/-- **Kummer's Theorem**
+
+Taking (`p - 1`) times the  `p`-adic valuation of the binomial `n` over `k` equals the sum of the
+digits of `k` plus the sum of the digits of `n - k` minus the sum of digits of `n`, all base `p`.
+-/
+
+theorem padicValNat_choose' {k n p: ℕ} [hp : Fact p.Prime]  (h : k ≤ n) :
+    (p - 1) * padicValNat p (choose n k) =
+    (p.digits k).sum + (p.digits (n - k)).sum - (p.digits n).sum := by
+  simp only [Nat.choose_eq_factorial_div_factorial h]
+  rw [padicValNat.div_of_dvd  <| factorial_mul_factorial_dvd_factorial h,
+      Nat.mul_sub_left_distrib,
+      padicValNat.mul (factorial_ne_zero _) (factorial_ne_zero _), Nat.mul_add]
+  simp only [padicValNat_factorial']
+  rw [← Nat.sub_add_comm <| digit_sum_le p k,
+      ← Nat.add_sub_assoc <| digit_sum_le p (n - k), Nat.sub_sub (k + (n - k)),
+      ← Nat.sub_right_comm, Nat.sub_sub, sub_add_eq,
+      tsub_tsub_assoc (le_of_eq <| add_sub_of_le h) ((add_comm (n - k) k) ▸
+      Nat.add_le_add (digit_sum_le p (n - k)) (digit_sum_le p k)),
+      add_sub_of_le h, Nat.sub_self n, zero_add, add_comm]
 
 end padicValNat
 
