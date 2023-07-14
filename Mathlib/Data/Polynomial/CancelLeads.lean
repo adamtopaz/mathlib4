@@ -8,8 +8,8 @@ Authors: Aaron Anderson
 ! Please do not edit these lines, except to modify the commit id
 ! if you have ported upstream changes.
 -/
-import Mathlib.Data.Polynomial.Degree.Definitions
 import Mathlib.Data.Polynomial.Degree.Lemmas
+import Mathlib.Tactic.ComputeDegree
 
 /-!
 # Cancel the leading terms of two polynomials
@@ -63,11 +63,8 @@ theorem natDegree_cancelLeads_lt_of_natDegree_le_natDegree_of_comm
     C p.leadingCoeff * q + -(C q.leadingCoeff * X ^ (q.natDegree - p.natDegree) * p) = 0
   · exact (le_of_eq (by simp only [h0, natDegree_zero])).trans_lt hq
   apply lt_of_le_of_ne
-  · -- porting note: was compute_degree_le; repeat' rwa [Nat.sub_add_cancel]
-    rw [natDegree_add_le_iff_left]
-    · apply natDegree_C_mul_le
-    refine (natDegree_neg (C q.leadingCoeff * X ^ (q.natDegree - p.natDegree) * p)).le.trans ?_
-    exact natDegree_mul_le.trans <| Nat.add_le_of_le_sub h <| natDegree_C_mul_X_pow_le _ _
+  · compute_degree_le!
+    repeat' rwa [Nat.sub_add_cancel]
   · contrapose! h0
     rw [← leadingCoeff_eq_zero, leadingCoeff, h0, mul_assoc, X_pow_mul, ← tsub_add_cancel_of_le h,
       add_comm _ p.natDegree]
