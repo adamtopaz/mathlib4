@@ -11,6 +11,7 @@ Authors: Yakov Pechersky
 import Mathlib.Algebra.Polynomial.BigOperators
 import Mathlib.Data.Polynomial.Degree.Lemmas
 import Mathlib.LinearAlgebra.Matrix.Determinant
+import Mathlib.Tactic.ComputeDegree
 
 /-!
 # Matrices of polynomials and polynomials of matrices
@@ -92,9 +93,8 @@ theorem coeff_det_X_add_C_card (A B : Matrix n n α) :
   convert (coeff_prod_of_natDegree_le (R := α) _ _ _ _).symm
   · simp [coeff_C]
   · rintro p -
-    refine' (natDegree_add_le _ _).trans _
-    simpa [Pi.smul_apply, map_apply, Algebra.id.smul_eq_mul, X_mul_C, natDegree_C,
-      max_eq_left, zero_le'] using (natDegree_C_mul_le _ _).trans (natDegree_X_le (R := α))
+    dsimp only [add_apply, smul_apply, map_apply, smul_eq_mul]
+    compute_degree_le
 #align polynomial.coeff_det_X_add_C_card Polynomial.coeff_det_X_add_C_card
 
 theorem leadingCoeff_det_X_one_add_C (A : Matrix n n α) :
