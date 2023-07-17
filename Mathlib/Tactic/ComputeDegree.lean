@@ -23,7 +23,6 @@ See the doc-string for more details.
 * Currently, the tactic does not handle goals of the form `degree f ≤ d`, where `d` is not the
   coercion of a `Nat`.  This should be fixed.
 * Deal with equalities, instead of inequalities (i.e. implement `compute_degree`).
-* Add functionality to deal with (some) exponents that are not closed natural numbers.
 * Add support for proving goals of the from `natDegree f ≠ 0` and `degree f ≠ 0`.
 * Make sure that `degree` and `natDegree` are equally supported.
 
@@ -33,8 +32,6 @@ We start with a goal of the form `natDegree f ≤ d` or `degree f ≤ d`.
 Recurse into `f` breaking apart sums, products and powers.  Take care of numerals,
 `C a, X (^ n), monomial a n` separately.
 -/
-
-section Tactic
 
 open Polynomial
 
@@ -62,7 +59,7 @@ theorem add {a b : Nat} {f g : R[X]} (hf : natDegree f ≤ a) (hg : natDegree g 
 
 theorem mul {a b : Nat} {f g : R[X]} (hf : natDegree f ≤ a) (hg : natDegree g ≤ b) :
     natDegree (f * g) ≤ a + b :=
-(f.natDegree_mul_le).trans $ add_le_add ‹_› ‹_›
+natDegree_mul_le.trans $ add_le_add ‹_› ‹_›
 
 theorem pow {a : Nat} (b : Nat) {f : R[X]} (hf : natDegree f ≤ a) :
     natDegree (f ^ b) ≤ b * a :=
@@ -91,45 +88,60 @@ end ring
 
 end mylemmas
 
-open Lean Meta Elab.Tactic
+section Tactic
 
-/-!
-Four helper lemmas to build `Expr`essions: `mkMax, mkPow, mkNatDegree, mkDegree`.
--/
+open Lean
 
-/-- Return `max a b` using `Max.max`. This method assumes `a` and `b` have the same type. -/
-def mkMax (a b : Expr) : MetaM Expr := mkAppM ``Max.max #[a, b]
-
-/-- Return `a ^ b` using `HPow.hPow`. -/
-def mkPow (a b : Expr) : MetaM Expr := mkAppM ``HPow.hPow #[a, b]
-
-/-- Returns `natDegree pol`. -/
-def mkNatDegree (pol : Expr) : MetaM Expr := mkAppM ``natDegree #[pol]
-
-/-- Returns `degree pol`. -/
-def mkDegree (pol : Expr) : MetaM Expr := mkAppM ``degree #[pol]
-
-/-- `isDegLE e` checks whether `e` is an `Expr`ession is an inequality whose LHS is
+/-- `isDegLE e` checks whether `e` is an `Expr`ession representing an inequality whose LHS is
 the `natDegree/degree` of a polynomial with coefficients in a semiring `R`.
 If `e` represents
-*  `natDegree f ≤ d`, then it returns `(true,  f, d, R, instSemiRing)`;
-*  `degree f ≤ d`,    then it returns `(false, f, d, R, instSemiRing)`;
+*  `natDegree f ≤ d`, then it returns `(true,  f)`;
+*  `degree f ≤ d`,    then it returns `(false, f)`;
 *  anything else, then it throws an error.
-
-Returning `R` and its `Semiring` instance is useful for simplifying `cDegCore`.
 -/
-def isDegLE (e : Expr) : CoreM (Bool × Expr × Expr × Expr × Expr) := do
+def isDegLE (e : Expr) : CoreM (Bool × Expr) := do
   match e.consumeMData.getAppFnArgs with
     -- check that the target is an inequality `≤`...
-    | (``LE.le, #[_, _, lhs, rhs]) => match lhs.getAppFnArgs with
+    | (``LE.le, #[_, _, lhs, _rhs]) => match lhs.getAppFnArgs with
       -- and that the LHS is `natDegree ...` or `degree ...`
-      | (``degree, #[R, iSR, pol])    => return (false, pol, rhs, R, iSR)
-      | (``natDegree, #[R, iSR, pol]) => return (true, pol, rhs, R, iSR)
-      | (na, _) => throwError (f!"Expected an inequality of the form\n\n" ++
+      | (``degree, #[_R, _iSR, pol])    => return (false, pol)
+      | (``natDegree, #[_R, _iSR, pol]) => return (true, pol)
+      | (na, _) => throwError (m!"Expected an inequality of the form\n\n" ++
         f!"  'f.natDegree ≤ d'  or  'f.degree ≤ d',\n\ninstead, {na} appears on the LHS")
-    | _ => throwError m!"Expected an inequality instead of '{e.getAppFnArgs.1}', '{e}'"
+    |  (na, _)  => throwError m!"Expected an inequality instead of '{na}', '{e}'"
 
-open Lean Elab Term MVarId
+/--  `getPolsName pol` takes the `Expr`ession `pol` as input,
+assuming that it represents a `Polynomial`.
+If `pol` is an `.app`, then it returns the list of arguments of `pol` that also represent
+`Polynomial`s, together with the `Name` of the theorem that `cDegCore` applies.
+
+The only exception is when `pol` represents `↑(polFun _) : α → Polynomial _`,
+and `polFun` is not `monomial` or `C`.
+In this case, the output is data for error-reporting in `cDegCore`.
+-/
+def getPolsName (pol : Expr) : List Expr × Name :=
+match pol.getAppFnArgs with
+  | (``HAdd.hAdd, #[_, _, _, _, f, g])           => ([f,g], ``add)
+  | (``HSub.hSub, #[_, _, _, _, f, g])           => ([f,g], ``sub)
+  | (``HMul.hMul, #[_, _, _, _, f, g])           => ([f,g], ``mul)
+  | (``HPow.hPow, #[_, _, _, _, f, _n])          => ([f], ``pow)
+  | (``Neg.neg,   #[_, _, f])                    => ([f], ``neg)
+  | (``Polynomial.X, _)                          => ([], ``natDegree_X_le)
+  -- can I avoid the tri-splitting `n = 0`, `n = 1`, and generic `n`?
+  | (``OfNat.ofNat, #[_, (.lit (.natVal 0)), _]) => ([], ``zero_le)
+  | (``OfNat.ofNat, #[_, (.lit (.natVal 1)), _]) => ([], ``one_le)
+  | (``OfNat.ofNat, _)                           => ([], ``nat_cast_le)
+  | (``Nat.cast, _)                              => ([], ``nat_cast_le)
+  | (``NatCast.natCast, _)                       => ([], ``nat_cast_le)
+  | (``Int.cast, _)                              => ([], ``int_cast_le)
+  | (``IntCast.intCast, _)                       => ([], ``int_cast_le)
+  -- deal with `monomial` and `C`
+  | (``FunLike.coe, #[_, _, _, _, polFun, _c]) => match polFun.getAppFnArgs with
+    | (``Polynomial.monomial, _)                 => ([], ``natDegree_monomial_le)
+    | (``Polynomial.C, _)                        => ([], ``C_le)
+    | _                                          => ([polFun], .anonymous)
+  -- possibly, all that's left is the case where `pol` is an `fvar` and its `Name` is `.anonymous`
+  | _ => ([], ``le_rfl)
 
 /-- `cDegCore (pol, mv)` takes as input a pair of an `Expr`ession `pol` and an `MVarId` `mv`, where
 *  `pol` represents a polynomial;
@@ -148,46 +160,27 @@ The optional `db` flag is for debugging: if `db = true`, then the tactic prints 
 partial
 def cDegCore (polMV : Expr × MVarId) (db : Bool := false) : MetaM (List (Expr × MVarId)) := do
 let (pol, mv) := polMV
-let polEx := ← (pol.getAppFn :: pol.getAppArgs.toList).mapM ppExpr
+let polEx := ← (pol.getAppFn :: pol.getAppArgs.toList).mapM Meta.ppExpr
 if db then
   if pol.ctorName != "app" then logInfo m!"* pol.ctorName: {pol.ctorName}\n"
   else logInfo m!"* getAppFnArgs\n{polEx}\n* pol head app\n{pol.getAppFnArgs.1}"
-let once := ← match pol.getAppFnArgs with
-  | (``HAdd.hAdd, #[_, _, _, _, f, g])  => return [f,g].zip (← mv.applyConst ``add)
-  | (``HSub.hSub, #[_, _, _, _, f, g])  => return [f,g].zip (← mv.applyConst ``sub)
-  | (``HMul.hMul, #[_, _, _, _, f, g])  => return [f,g].zip (← mv.applyConst ``mul)
-  | (``HPow.hPow, #[_, _, _, _, f, _n]) => return [f].zip (← mv.applyConst ``pow)
-  | (``Neg.neg,   #[_, _, f])           => return [f].zip (← mv.applyConst ``neg)
-  | (``Polynomial.X, _)                 => return [].zip (← mv.applyConst ``natDegree_X_le)
-  --  -- can I avoid the tri-splitting `n = 0`, `n = 1`, and generic `n`?
-  | (``OfNat.ofNat, #[_, (.lit (.natVal 0)), _]) => return [].zip (← mv.applyConst ``zero_le)
-  | (``OfNat.ofNat, #[_, (.lit (.natVal 1)), _]) => return [].zip (← mv.applyConst ``one_le)
-  | (``OfNat.ofNat, _)                  => return [].zip (← mv.applyConst ``nat_cast_le)
-  | (``Nat.cast, _)                     => return [].zip (← mv.applyConst ``nat_cast_le)
-  | (``NatCast.natCast, _)              => return [].zip (← mv.applyConst ``nat_cast_le)
-  | (``Int.cast, _)                     => return [].zip (← mv.applyConst ``int_cast_le)
-  | (``IntCast.intCast, _)              => return [].zip (← mv.applyConst ``int_cast_le)
-  -- deal with `monomial` and `C`
-  | (``FunLike.coe, #[_, _, _, _, polFun, _c]) => do match polFun.getAppFnArgs with
-    | (``Polynomial.monomial, _)        => return [].zip (← mv.applyConst ``natDegree_monomial_le)
-    | (``Polynomial.C, _)               =>  return [].zip (← mv.applyConst ``C_le)
-    | _ => do let ppP ← ppExpr polFun;
-              throwError m!"'compute_degree_le' is not implemented for {ppP}"
-  -- possibly, all that's left is the case where `pol` is an `fvar` and its `Name` is `.anonymous`
-  | _ => return [].zip (← mv.applyConst ``le_rfl)
+let (pols, na) := getPolsName pol
+if na.isAnonymous then throwError m!"'compute_degree_le' is undefined for {← Meta.ppExpr pols[0]!}"
+let once := pols.zip (← mv.applyConst na)
 return (← once.mapM fun x => cDegCore x db).join
 
 /-- Allows the syntax expressions
 * `compute_degree_le`,
 * `compute_degree_le !`,
 * `compute_degree_le -debug`
-* `compute_degree_le ! - debug`.
+* `compute_degree_le ! -debug`.
 -/
 syntax (name := computeDegreeLE) "compute_degree_le" "!"? "-debug"? : tactic
 
 /--  Allows writing `compute_degree_le!` with no space preceding `!`. -/
 macro "compute_degree_le!" dbg:"-debug"? : tactic => `(tactic| compute_degree_le ! $[-debug%$dbg]?)
 
+open Elab.Tactic in
 /--
 `compute_degree_le` is a tactic to solve goals of the form `natDegree f ≤ d` or `degree f ≤ d`.
 
@@ -204,14 +197,13 @@ There is also a "debug-mode", where the tactic prints some information.
 This is activated by using `compute_degree_le -debug` or `compute_degree_le! -debug`.
 -/
 elab_rules : tactic | `(tactic| compute_degree_le $[!%$str]? $[-debug%$debug]?) => focus do
-  let (isNatDeg?, lhs, _rhs, _R, _instSR) := ← isDegLE (← getMainTarget)
+  let (isNatDeg?, lhs) := ← isDegLE (← getMainTarget)
   let goal := ← getMainGoal
   let natDegGoal := ← match isNatDeg? with
-    | true => do pure [goal]
-    | false => do
-      goal.applyConst ``degree_le_of_natDegree_le
+    | true  => return [goal]
+    | false => goal.applyConst ``degree_le_of_natDegree_le
   guard (natDegGoal.length = 1) <|> throwError
-    f!"'compute_degree_le': unexpected number of goals -- {natDegGoal.length} instead of 1!"
+    m!"'compute_degree_le': expected 1 goal instead of {natDegGoal.length}!"
   let le_goals := ← (natDegGoal[0]!).applyConst ``le_trans
   let goal := le_goals[0]!
   let nfle_pf := ← cDegCore (← instantiateMVars lhs, goal) (db := debug.isSome)
@@ -219,5 +211,7 @@ elab_rules : tactic | `(tactic| compute_degree_le $[!%$str]? $[-debug%$debug]?) 
   if debug.isSome then logInfo m!"Computed proof:\n{nfle_pf}"
   if str.isSome then evalTactic (← `(tactic| norm_num <;> try assumption))
   else evalTactic (← `(tactic| conv_lhs => norm_num))
+
+end Tactic
 
 end Mathlib.Tactic.ComputeDegree
