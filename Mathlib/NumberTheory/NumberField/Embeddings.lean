@@ -227,9 +227,9 @@ namespace NumberField.InfinitePlace
 
 open NumberField
 
-instance {K : Type _} [Field K] : FunLike (InfinitePlace K) K (fun _ => ℝ) :=
-{ coe := fun w x => w.1 x
-  coe_injective' := fun ⟨_, _⟩ ⟨_, _⟩ h => by { congr; ext x; exact congrFun h x }}
+-- instance {K : Type _} [Field K] : FunLike (InfinitePlace K) K (fun _ => ℝ) :=
+-- { coe := fun w x => w.1 x
+--   coe_injective' := fun _ _ h => Subtype.eq (AbsoluteValue.ext fun x => congr_fun h x)}
 
 instance : MonoidWithZeroHomClass (InfinitePlace K) K ℝ where
   coe w x := w.1 x
@@ -243,55 +243,46 @@ instance : NonnegHomClass (InfinitePlace K) K ℝ where
   coe_injective' _ _ h := Subtype.eq (AbsoluteValue.ext fun x => congr_fun h x)
   map_nonneg w _ := w.1.nonneg _
 
-#exit
-
 -- Porting note: new
-@[ext]
-theorem ext {w z : InfinitePlace K} (h : ∀ x, w x = z x) : w = z := FunLike.ext _ _ h
+-- @[ext]
+-- theorem ext {w z : InfinitePlace K} (h : ∀ x, w x = z x) : w = z := FunLike.ext _ _ h
 
-theorem coe_mk (φ : K →+* ℂ) : ⇑(mk φ) = place φ := rfl
-#align number_field.infinite_place.coe_mk NumberField.InfinitePlace.coe_mk
+-- theorem coe_mk (φ : K →+* ℂ) : ⇑(mk φ) = place φ := rfl
+-- #align number_field.infinite_place.coe_mk NumberField.InfinitePlace.coe_mk
 
+@[simp]
 theorem apply (φ : K →+* ℂ) (x : K) : (mk φ) x = Complex.abs (φ x) := rfl
 #align number_field.infinite_place.apply NumberField.InfinitePlace.apply
 
 /-- For an infinite place `w`, return an embedding `φ` such that `w = infinite_place φ` . -/
-noncomputable def embedding (w : InfinitePlace K) : K →+* ℂ :=
-  w.2.choose
+noncomputable def embedding (w : InfinitePlace K) : K →+* ℂ := w.2.choose
 #align number_field.infinite_place.embedding NumberField.InfinitePlace.embedding
 
 @[simp]
-theorem mk_embedding (w : InfinitePlace K) : mk (embedding w) = w :=
-  Subtype.ext w.2.choose_spec
+theorem mk_embedding (w : InfinitePlace K) : mk (embedding w) = w := Subtype.ext w.2.choose_spec
 #align number_field.infinite_place.mk_embedding NumberField.InfinitePlace.mk_embedding
 
 @[simp]
-theorem abs_embedding (w : InfinitePlace K) (x : K) : Complex.abs (embedding w x) = w x :=
-  congr_fun (congr_arg (↑) w.2.choose_spec) x
-#align number_field.infinite_place.abs_embedding NumberField.InfinitePlace.abs_embedding
+theorem mk_conjugate_eq (φ : K →+* ℂ) : mk (ComplexEmbedding.conjugate φ) = mk φ := by
+  refine FunLike.ext _ _ (fun x => ?_)
+  rw [apply, apply, ComplexEmbedding.conjugate_coe_eq, Complex.abs_conj]
+#align number_field.infinite_place.mk_conjugate_eq NumberField.InfinitePlace.mk_conjugate_eq
+
+-- @[simp]
+-- theorem abs_embedding (w : InfinitePlace K) (x : K) : Complex.abs (embedding w x) = w x :=
+--   congrFun (congrArg (↑) w.2.choose_spec) x
+-- #align number_field.infinite_place.abs_embedding NumberField.InfinitePlace.abs_embedding
 
 theorem eq_iff_eq (x : K) (r : ℝ) : (∀ w : InfinitePlace K, w x = r) ↔ ∀ φ : K →+* ℂ, ‖φ x‖ = r :=
--- Porting note: original proof was:  ⟨fun hw φ => hw (mk φ), fun hφ ⟨w, ⟨φ, rfl⟩⟩ => hφ φ⟩
--- but `rfl` does not work here anymore
   ⟨fun hw φ => hw (mk φ), by rintro hφ ⟨w, ⟨φ, rfl⟩⟩; exact hφ φ⟩
-
 #align number_field.infinite_place.eq_iff_eq NumberField.InfinitePlace.eq_iff_eq
 
 theorem le_iff_le (x : K) (r : ℝ) : (∀ w : InfinitePlace K, w x ≤ r) ↔ ∀ φ : K →+* ℂ, ‖φ x‖ ≤ r :=
--- Porting note: original proof was:  ⟨fun hw φ => hw (mk φ), fun hφ ⟨w, ⟨φ, rfl⟩⟩ => hφ φ⟩
--- but `rfl` does not work here anymore
   ⟨fun hw φ => hw (mk φ), by rintro hφ ⟨w, ⟨φ, rfl⟩⟩; exact hφ φ⟩
 #align number_field.infinite_place.le_iff_le NumberField.InfinitePlace.le_iff_le
 
-theorem pos_iff {w : InfinitePlace K} {x : K} : 0 < w x ↔ x ≠ 0 :=
-  AbsoluteValue.pos_iff w.1
+theorem pos_iff {w : InfinitePlace K} {x : K} : 0 < w x ↔ x ≠ 0 := AbsoluteValue.pos_iff w.1
 #align number_field.infinite_place.pos_iff NumberField.InfinitePlace.pos_iff
-
-@[simp]
-theorem mk_conjugate_eq (φ : K →+* ℂ) : mk (ComplexEmbedding.conjugate φ) = mk φ := by
-  ext x
-  exact congr_fun (congr_arg (↑) (ComplexEmbedding.place_conjugate φ)) x
-#align number_field.infinite_place.mk_conjugate_eq NumberField.InfinitePlace.mk_conjugate_eq
 
 @[simp]
 theorem mk_eq_iff {φ ψ : K →+* ℂ} : mk φ = mk ψ ↔ φ = ψ ∨ ComplexEmbedding.conjugate φ = ψ := by
@@ -311,23 +302,17 @@ theorem mk_eq_iff {φ ψ : K →+* ℂ} : mk φ = mk ψ ↔ φ = ψ ∨ ComplexE
       suffices ‖φ (ι.symm (x - y))‖ = ‖ψ (ι.symm (x - y))‖ by
         rw [← this, ← RingEquiv.ofLeftInverse_apply hiφ _, RingEquiv.apply_symm_apply ι _]
         rfl
-      exact congr_fun (congr_arg (↑) h₀) _
-    cases'
-      Complex.uniformContinuous_ringHom_eq_id_or_conj φ.fieldRange hlip.uniformContinuous with h h
-    · left; ext1 x
-      -- Porting note: original proof was just
-      -- convert (congr_fun h (ι x)).symm
-      have := (congr_fun h (ι x)).symm
-      dsimp at this
-      convert this
-      exact (RingEquiv.apply_symm_apply ι.symm x).symm
-    · right; ext1 x
-      -- Porting note: original proof was just
-      -- convert (congr_fun h (ι x)).symm
-      have := (congr_fun h (ι x)).symm
-      dsimp at this
-      convert this
-      exact (RingEquiv.apply_symm_apply ι.symm x).symm
+      exact congrFun (congrArg (↑) h₀) _
+    cases
+      Complex.uniformContinuous_ringHom_eq_id_or_conj φ.fieldRange hlip.uniformContinuous with
+    | inl h =>
+        left; ext1 x
+        conv_rhs => rw [← hiφ x]
+        exact (congrFun h (ι x)).symm
+    | inr h =>
+        right; ext1 x
+        conv_rhs => rw [← hiφ x]
+        exact (congrFun h (ι x)).symm
   · rintro (⟨h⟩ | ⟨h⟩)
     · exact congr_arg mk h
     · rw [← mk_conjugate_eq]
@@ -343,6 +328,8 @@ def IsReal (w : InfinitePlace K) : Prop :=
 def IsComplex (w : InfinitePlace K) : Prop :=
   ∃ φ : K →+* ℂ, ¬ComplexEmbedding.IsReal φ ∧ mk φ = w
 #align number_field.infinite_place.is_complex NumberField.InfinitePlace.IsComplex
+
+#exit
 
 @[simp]
 theorem _root_.NumberField.ComplexEmbedding.IsReal.embedding_mk {φ : K →+* ℂ}
