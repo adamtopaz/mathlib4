@@ -15,12 +15,13 @@ import Mathlib.Topology.Instances.Complex
 # Embeddings of number fields
 This file defines the embeddings of a number field into an algebraic closed field.
 
-## Main Results
+## Main Definitions and Results
 * `NumberField.Embeddings.range_eval_eq_rootSet_minpoly`: let `x ∈ K` with `K` number field and
   let `A` be an algebraic closed field of char. 0, then the images of `x` by the embeddings of `K`
    in `A` are exactly the roots in `A` of the minimal polynomial of `x` over `ℚ`.
 * `NumberField.Embeddings.pow_eq_one_of_norm_eq_one`: an algebraic integer whose conjugates are
   all of norm one is a root of unity.
+* `InfinitePlace`: the type of infinite places of a number field `K`.
 
 ## Tags
 number field, embeddings, places, infinite places
@@ -158,29 +159,28 @@ variable {K : Type _} [Field K]
 
 /-- The conjugate of a complex embedding as a complex embedding. -/
 @[reducible]
-def conjugate (φ : K →+* ℂ) : K →+* ℂ :=
-    star φ
+def conjugate (φ : K →+* ℂ) : K →+* ℂ := star φ
 #align number_field.complex_embedding.conjugate NumberField.ComplexEmbedding.conjugate
 
 @[simp]
 theorem conjugate_coe_eq (φ : K →+* ℂ) (x : K) : (conjugate φ) x = conj (φ x) := rfl
 #align number_field.complex_embedding.conjugate_coe_eq NumberField.ComplexEmbedding.conjugate_coe_eq
 
-theorem place_conjugate (φ : K →+* ℂ) : place (conjugate φ) = place φ := by
-  ext; simp only [place_apply, norm_eq_abs, abs_conj, conjugate_coe_eq]
-#align number_field.complex_embedding.place_conjugate NumberField.ComplexEmbedding.place_conjugate
+-- theorem place_conjugate (φ : K →+* ℂ) : place (conjugate φ) = place φ := by
+--   ext; simp only [place_apply, norm_eq_abs, abs_conj, conjugate_coe_eq]
+-- #align number_field.complex_embedding.place_conjugate NumberField.ComplexEmbedding.place_conjugate
 
 /-- An embedding into `ℂ` is real if it is fixed by complex conjugation. -/
 @[reducible]
-def IsReal (φ : K →+* ℂ) : Prop :=
-  IsSelfAdjoint φ
+def IsReal (φ : K →+* ℂ) : Prop := IsSelfAdjoint φ
 #align number_field.complex_embedding.is_real NumberField.ComplexEmbedding.IsReal
 
 theorem isReal_iff {φ : K →+* ℂ} : IsReal φ ↔ conjugate φ = φ := isSelfAdjoint_iff
 #align number_field.complex_embedding.is_real_iff NumberField.ComplexEmbedding.isReal_iff
 
-theorem isReal_iff_isReal_conj {φ : K →+* ℂ} :
-    IsReal φ ↔ IsReal (conjugate φ) := by rw [IsReal, IsReal, IsSelfAdjoint.star_iff]
+theorem isReal_conjugate_iff {φ : K →+* ℂ} : IsReal (conjugate φ) ↔ IsReal φ :=
+  IsSelfAdjoint.star_iff
+#align number_field.complex_embedding.is_real_conjugate_iff NumberField.ComplexEmbedding.isReal_conjugate_iff
 
 /-- A real embedding as a ring homomorphism from `K` to `ℝ` . -/
 def IsReal.embedding {φ : K →+* ℂ} (hφ : IsReal φ) : K →+* ℝ where
@@ -202,15 +202,6 @@ theorem IsReal.coe_embedding_apply {φ : K →+* ℂ} (hφ : IsReal φ) (x : K) 
     exact RingHom.congr_fun hφ x
 #align number_field.complex_embedding.is_real.coe_embedding_apply NumberField.ComplexEmbedding.IsReal.coe_embedding_apply
 
-theorem IsReal.place_embedding {φ : K →+* ℂ} (hφ : IsReal φ) : place hφ.embedding = place φ := by
-  ext x
-  simp only [place_apply, Real.norm_eq_abs, ← abs_ofReal, norm_eq_abs, hφ.coe_embedding_apply x]
-#align number_field.complex_embedding.is_real.place_embedding NumberField.ComplexEmbedding.IsReal.place_embedding
-
-theorem isReal_conjugate_iff {φ : K →+* ℂ} : IsReal (conjugate φ) ↔ IsReal φ :=
-  IsSelfAdjoint.star_iff
-#align number_field.complex_embedding.is_real_conjugate_iff NumberField.ComplexEmbedding.isReal_conjugate_iff
-
 end NumberField.ComplexEmbedding
 
 section InfinitePlace
@@ -220,12 +211,10 @@ open NumberField
 variable (K : Type _) [Field K]
 
 /-- An infinite place of a number field `K` is a place associated to a complex embedding. -/
-def NumberField.InfinitePlace :=
-  { w : AbsoluteValue K ℝ // ∃ φ : K →+* ℂ, place φ = w }
+def NumberField.InfinitePlace := { w : AbsoluteValue K ℝ // ∃ φ : K →+* ℂ, place φ = w }
 #align number_field.infinite_place NumberField.InfinitePlace
 
-instance [NumberField K] : Nonempty (NumberField.InfinitePlace K) :=
-  Set.instNonemptyElemRange _
+instance [NumberField K] : Nonempty (NumberField.InfinitePlace K) := Set.instNonemptyElemRange _
 
 variable {K}
 
@@ -238,7 +227,9 @@ namespace NumberField.InfinitePlace
 
 open NumberField
 
-instance : CoeFun (InfinitePlace K) fun _ => K → ℝ where coe w := w.1
+instance {K : Type _} [Field K] : FunLike (InfinitePlace K) K (fun _ => ℝ) :=
+{ coe := fun w x => w.1 x
+  coe_injective' := fun ⟨_, _⟩ ⟨_, _⟩ h => by { congr; ext x; exact congrFun h x }}
 
 instance : MonoidWithZeroHomClass (InfinitePlace K) K ℝ where
   coe w x := w.1 x
@@ -251,6 +242,8 @@ instance : NonnegHomClass (InfinitePlace K) K ℝ where
   coe w x := w x
   coe_injective' _ _ h := Subtype.eq (AbsoluteValue.ext fun x => congr_fun h x)
   map_nonneg w _ := w.1.nonneg _
+
+#exit
 
 -- Porting note: new
 @[ext]
