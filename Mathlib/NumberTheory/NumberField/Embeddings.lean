@@ -575,3 +575,5 @@ theorem card_complex_embeddings :
 end NumberField.InfinitePlace
 
 end InfinitePlace
+
+#minimize_imports
