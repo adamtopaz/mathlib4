@@ -57,17 +57,8 @@ theorem natDegree_det_X_add_C_le (A B : Matrix n n α) :
       (natDegree_prod_le (Finset.univ : Finset n) fun i : n => (X • A.map C + B.map C) (g i) i)
     _ ≤ Finset.univ.card • 1 := (Finset.sum_le_card_nsmul _ _ 1 fun (i : n) _ => ?_)
     _ ≤ Fintype.card n := by simp [mul_one, Algebra.id.smul_eq_mul, Finset.card_univ]
-
-  calc
-    natDegree (((X : α[X]) • A.map C + B.map C) (g i) i) =
-        natDegree ((X : α[X]) * C (A (g i) i) + C (B (g i) i)) :=
-      by simp
-    _ ≤ max (natDegree ((X : α[X]) * C (A (g i) i))) (natDegree (C (B (g i) i))) :=
-      (natDegree_add_le _ _)
-    _ = natDegree ((X : α[X]) * C (A (g i) i)) :=
-      (max_eq_left ((natDegree_C _).le.trans (zero_le _)))
-    _ ≤ natDegree (X : α[X]) := (natDegree_mul_C_le _ _)
-    _ ≤ 1 := natDegree_X_le
+  dsimp only [add_apply, smul_apply, map_apply, smul_eq_mul]
+  compute_degree_le
 #align polynomial.nat_degree_det_X_add_C_le Polynomial.natDegree_det_X_add_C_le
 
 theorem coeff_det_X_add_C_zero (A B : Matrix n n α) :
