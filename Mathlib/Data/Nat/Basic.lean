@@ -318,7 +318,7 @@ theorem pred_sub (n m : ℕ) : pred n - m = pred (n - m) := by
 #align nat.pred_sub Nat.pred_sub
 
 -- Moved to Std
-#align nat.le_pred_of_lt Nat.le_pred_of_lt
+#align Nat.le_sub_one_of_lt Nat.le_sub_one_of_lt
 
 theorem le_of_pred_lt {m n : ℕ} : pred m < n → m ≤ n :=
   match m with
