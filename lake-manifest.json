@@ -26,8 +26,8 @@
     "name": "aesop",
     "inputRev?": "master"}},
   {"git":
-   {"url": "https://github.com/leanprover/std4",
+   {"url": "https://github.com/fgdorais/std4",
     "subDir?": null,
-    "rev": "53508cb436494bb09ee427f95682968e7cda091a",
+    "rev": "d8834f878f5a9415f271ab746fb5ab87835067a6",
     "name": "std",
-    "inputRev?": "main"}}]}
+    "inputRev?": "nat-mul"}}]}
