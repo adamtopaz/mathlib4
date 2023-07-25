@@ -3,7 +3,7 @@ Copyright (c) 2014 Microsoft Corporation. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Leonardo de Moura
 -/
-import Mathlib.Mathport.Rename
+import Mathlib.Init.Logic
 
 /-!
 # Boolean operations
@@ -17,11 +17,5 @@ apparently `xor` didn't make the cut.
 #align bor or
 #align band and
 #align bnot not
-
-/-- Boolean XOR -/
-@[inline]
-def xor : Bool → Bool → Bool
-  | true, false => true
-  | false, true => true
-  | _, _ => false
+-- Moved to Std
 #align bxor xor
