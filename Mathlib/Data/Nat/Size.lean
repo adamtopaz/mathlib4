@@ -115,7 +115,7 @@ theorem size_shiftl' {b m n} (h : shiftl' b m n ≠ 0) : size (shiftl' b m n) = 
   simp only [zero_add, one_mul] at this
   obtain rfl : n = 0 :=
     Nat.eq_zero_of_le_zero
-      (le_of_not_gt fun hn => ne_of_gt (pow_lt_pow_of_lt_right (by decide) hn) this)
+      (le_of_not_gt fun hn => ne_of_gt (Nat.pow_lt_pow_of_lt_right (by decide) hn) this)
   rfl
 #align nat.size_shiftl' Nat.size_shiftl'
 
@@ -164,7 +164,7 @@ theorem size_eq_zero {n : ℕ} : size n = 0 ↔ n = 0 := by
 #align nat.size_eq_zero Nat.size_eq_zero
 
 theorem size_pow {n : ℕ} : size (2 ^ n) = n + 1 :=
-  le_antisymm (size_le.2 <| pow_lt_pow_of_lt_right (by decide) (lt_succ_self _))
+  le_antisymm (size_le.2 <| Nat.pow_lt_pow_of_lt_right (by decide) (lt_succ_self _))
     (lt_size.2 <| le_rfl)
 #align nat.size_pow Nat.size_pow
 

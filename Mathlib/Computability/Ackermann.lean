@@ -296,7 +296,8 @@ theorem ack_ack_lt_ack_max_add_two (m n k : ℕ) : ack m (ack n k) < ack (max m 
 theorem ack_add_one_sq_lt_ack_add_four (m n : ℕ) : ack m ((n + 1) ^ 2) < ack (m + 4) n :=
   calc
     ack m ((n + 1) ^ 2) < ack m ((ack m n + 1) ^ 2) :=
-      ack_strictMono_right m <| pow_lt_pow_of_lt_left (succ_lt_succ <| lt_ack_right m n) zero_lt_two
+      ack_strictMono_right m <| Nat.pow_lt_pow_of_lt_left (succ_lt_succ <| lt_ack_right m n)
+        zero_lt_two
     _ ≤ ack m (ack (m + 3) n) := ack_mono_right m <| ack_add_one_sq_lt_ack_add_three m n
     _ ≤ ack (m + 2) (ack (m + 3) n) := ack_mono_left _ <| by linarith
     _ = ack (m + 3) (n + 1) := (ack_succ_succ _ n).symm

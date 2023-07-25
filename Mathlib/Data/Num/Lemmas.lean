@@ -973,7 +973,7 @@ theorem shiftr_to_nat (m n) : (shiftr m n : ℕ) = Nat.shiftr m n := by
   · rw [Nat.shiftr_eq_div_pow]
     symm
     apply Nat.div_eq_of_lt
-    exact @Nat.pow_lt_pow_of_lt_right 2 (by decide) 0 (n + 1) (Nat.succ_pos _)
+    exact (Nat.one_lt_pow_iff Nat.noConfusion).2 (by decide)
   · trans
     apply IH
     change Nat.shiftr m n = Nat.shiftr (_root_.bit1 m) (n + 1)
