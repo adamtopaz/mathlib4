@@ -107,7 +107,7 @@ theorem length_set : ∀ {m : ℕ} {as : List α}, as {m ↦ a}.length = max as.
       exact Nat.succ_le_succ (Nat.zero_le _)
   | m + 1, [] => by
     have := @length_set m []
-    simp [set, length, @length_set m, Nat.zero_max]
+    simp [set, length, @length_set m, Nat.max_zero_left]
   | m + 1, _ :: as => by
     simp [set, length, @length_set m, Nat.max_succ_succ]
 #align list.func.length_set List.Func.length_set

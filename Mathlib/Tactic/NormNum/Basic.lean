@@ -490,7 +490,6 @@ where
       let c₀' := c₀.natLit!
       if b' &&& 1 == 0 then
         have c : Q(ℕ) := mkRawNatLit (c₀' * c₀')
-<<<<<<< HEAD
         haveI : $c =Q Nat.mul $c₀ $c₀ := ⟨⟩
         haveI : $b =Q 2 * $b₀ := ⟨⟩
         ⟨c, q(IsNatPowT.bit0)⟩
@@ -498,15 +497,6 @@ where
         have c : Q(ℕ) := mkRawNatLit (c₀' * (c₀' * a'))
         haveI : $c =Q Nat.mul $c₀ (Nat.mul $c₀ $a) := ⟨⟩
         haveI : $b =Q 2 * $b₀ + 1 := ⟨⟩
-=======
-        have : QuotedDefEq (α := (q(ℕ) : Q(Type))) c q(Nat.mul $c₀ $c₀) := ⟨⟩
-        have : QuotedDefEq (α := (q(ℕ) : Q(Type))) b q(2 * $b₀) := ⟨⟩
-        ⟨c, q(IsNatPowT.bit0)⟩
-      else
-        have c : Q(ℕ) := mkRawNatLit (c₀' * (c₀' * a'))
-        have : QuotedDefEq (α := (q(ℕ) : Q(Type))) c q(Nat.mul $c₀ (Nat.mul $c₀ $a)) := ⟨⟩
-        have : QuotedDefEq (α := (q(ℕ) : Q(Type))) b q(2 * $b₀ + 1) := ⟨⟩
->>>>>>> b8ee1463d (fixes)
         ⟨c, q(IsNatPowT.bit1)⟩
     else
       let d := depth >>> 1
