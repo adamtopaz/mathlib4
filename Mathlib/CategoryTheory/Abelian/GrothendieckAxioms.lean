@@ -1,14 +1,10 @@
---import Mathlib.CategoryTheory.Abelian.Basic
-import Mathlib
+import Mathlib.CategoryTheory.Abelian.Basic
+import Mathlib.CategoryTheory.Limits.Filtered
 
 namespace CategoryTheory
 open Limits
 
 universe v u
-
-instance {C : Type u} [Category.{v} C] {J : Type v} [SmallCategory J]
-  [HasColimitsOfShape J C] :
-  PreservesColimits (colim : (J ⥤ C) ⥤ C) := inferInstance
 
 class AB4 (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐] where
   preservesFiniteLimits :
