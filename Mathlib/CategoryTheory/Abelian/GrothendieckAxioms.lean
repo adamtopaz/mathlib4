@@ -8,7 +8,7 @@ universe v u
 
 class AB4 (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐] where
   preservesFiniteLimits :
-    ∀ (α : Type v), PreservesFiniteLimits (colim : (Discrete α ⥤ 𝓐)  ⥤ 𝓐)
+    ∀ (α : Type v), PreservesFiniteLimits (colim : (Discrete α ⥤ 𝓐) ⥤ 𝓐)
 
 instance (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐] [AB4 𝓐]
     (α : Type v) : PreservesFiniteLimits (colim : (Discrete α ⥤ 𝓐) ⥤ 𝓐) :=
