@@ -264,10 +264,7 @@ noncomputable
 instance (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐]
   [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] [HasFiniteLimits 𝓐] [AB5 𝓐] : AB4 𝓐 where
     preservesFiniteLimits := fun α => {
-      preservesFiniteLimits := fun _ =>
-        letI e : PreservesFiniteLimits (discreteToFinset α 𝓐 ⋙ colim)
-          := compPreservesFiniteLimits (discreteToFinset α 𝓐) (colim)
-      {
+      preservesFiniteLimits := fun _ => {
         preservesLimit := fun {K} => preservesLimitOfNatIso K (actuallyUsefulIso α 𝓐).symm
       }
     }
