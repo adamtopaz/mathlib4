@@ -27,6 +27,7 @@ instance (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐] [AB5 𝓐]
     PreservesFiniteLimits (colim : (J ⥤ 𝓐) ⥤ 𝓐) :=
   AB5.preservesFiniteLimits _
 
+/-- The diagram of all finite coproducts corresponding to subsets of α-/
 @[simps]
 noncomputable
 def finsetBiproductDiagram {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐]
@@ -59,9 +60,10 @@ def finsetCoproductColimitCoconeIsColimit {α : Type v} {𝓐 : Type u} [Categor
     apply Sigma.hom_ext ; intro s
     simp [←(h {s})]
 
+/-- Colimit of finsetBiproductDiagram is infact a coproduct-/
 @[simps!]
 noncomputable
-def coproductIsoBiproduct {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] (X : α → 𝓐) [HasColimits 𝓐]
+def coproductIsoColimitFinsetBiproduct {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] (X : α → 𝓐) [HasColimits 𝓐]
   [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] :
     ∐ X ≅ colimit (finsetBiproductDiagram X) :=
   (finsetCoproductColimitCoconeIsColimit X).coconePointUniqueUpToIso (colimit.isColimit _)
@@ -80,6 +82,9 @@ def finsetBiproductDiagramNatTrans {α : Type v} {𝓐 : Type u} [Category.{v} �
     · subst h ; simp
     · simp
 
+
+/-- Functor sending a functor inducing a colimit in 𝓐 indexed by α to the functor from Finset α
+    sending all finite sets to finite coproducts-/
 @[simps]
 noncomputable
 def discreteToFinset (α : Type v) (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐]
@@ -90,6 +95,9 @@ def discreteToFinset (α : Type v) (𝓐 : Type u) [Category.{v} 𝓐] [HasColim
 
 namespace preservesLimitAux
 
+/--
+    *** Thus K ⋙ discreteToFinset α 𝓐 sends j to "K j q" effectively
+    Cone where our maps -/
 @[simps]
 noncomputable
 def evalCone {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐] {J : Type}
@@ -160,7 +168,7 @@ def colimIsoDiscreteToFinsetCompColim (α : Type v) (𝓐 : Type u) [Category.{v
   [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] :
     (colim : (Discrete α ⥤ 𝓐) ⥤ 𝓐) ≅ discreteToFinset α 𝓐 ⋙ colim :=
   NatIso.ofComponents (fun F => HasColimit.isoOfNatIso (Discrete.natIsoFunctor (F := F))
-  ≪≫ coproductIsoBiproduct _) <| by
+  ≪≫ coproductIsoColimitFinsetBiproduct _) <| by
     rintro ⟨x⟩ ⟨y⟩ f
     apply colimit.hom_ext
     rintro ⟨j⟩
