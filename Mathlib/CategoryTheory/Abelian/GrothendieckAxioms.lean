@@ -259,7 +259,7 @@ instance preservesLimitsOfShapeDiscreteToFinset (α : Type v) {𝓐 : Type u} [C
         apply hE'.hom_ext ; intro jj
         simp only [Functor.mapCone_π_app, evaluation_obj_map, Category.assoc,
           preservesLimitAux.Sigma.lift_π_assoc]
-        have := (PreservesLimit.preserves hE).fac (preservesLimitAux.foo' s a ha) jj
+        have := (PreservesLimit.preserves hE).fac (preservesLimitAux.evalCone s a ha) jj
         dsimp at this
         rw [this]
         dsimp only [preservesLimitAux.Sigma.isoBiproduct, preservesLimitAux.Sigma.π]
