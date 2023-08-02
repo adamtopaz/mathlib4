@@ -241,8 +241,35 @@ instance preservesLimitsOfShapeDiscreteToFinset (α : Type v) {𝓐 : Type u} [C
   preservesLimit {K} := {
     preserves := fun E {hE} => {
       lift := fun T => preservesLimitAux.lift hE T
-      fac := sorry
-      uniq := sorry
+      fac := fun s j => by {
+        ext A
+        simp
+        dsimp only [preservesLimitAux.Sigma.isoBiproduct]
+        dsimp only [IsColimit.coconePointUniqueUpToIso]
+        simp
+        sorry
+      }
+      uniq := fun s m hh => by
+        ext A
+        simp only [preservesLimitAux.lift_app]
+        dsimp only [isLimitOfPreserves]
+        apply preservesLimitAux.Sigma.hom_ext' ; rintro ⟨a, ha⟩
+        let E' := ((evaluation (Discrete α) 𝓐).obj { as := a }).mapCone E
+        let hE' : IsLimit E' := (isLimitOfPreserves ((evaluation (Discrete α) 𝓐).obj { as := a }) hE)
+        apply hE'.hom_ext ; intro jj
+        simp only [Functor.mapCone_π_app, evaluation_obj_map, Category.assoc,
+          preservesLimitAux.Sigma.lift_π_assoc]
+        have := (PreservesLimit.preserves hE).fac (preservesLimitAux.foo' s a ha) jj
+        dsimp at this
+        rw [this]
+        dsimp only [preservesLimitAux.Sigma.isoBiproduct, preservesLimitAux.Sigma.π]
+        simp [← (hh jj)]
+        congr 1
+        ext B
+        simp [biproduct.ι_π, biproduct.ι_π_assoc]
+        split_ifs with h
+        · subst h ; simp
+        · simp
     }
   }
 
