@@ -82,7 +82,6 @@ def finsetBiproductDiagramNatTrans {α : Type v} {𝓐 : Type u} [Category.{v} �
     · subst h ; simp
     · simp
 
-
 /-- Functor sending a functor inducing a colimit in 𝓐 indexed by α to the functor from Finset α
     sending all finite sets to finite coproducts-/
 @[simps]
@@ -102,7 +101,7 @@ namespace preservesLimitAux
 noncomputable
 def evalCone {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐] {J : Type}
   [SmallCategory J] [FinCategory J] [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐]
-  {K : J ⥤ Discrete α ⥤ 𝓐} (T : Cone (K ⋙ discreteToFinset α 𝓐)) {A : Finset α} (q : α)
+  {K : J ⥤ Discrete α ⥤ 𝓐} (T : Cone (K ⋙ discreteToFinset α 𝓐)) {A : Finset α} {q : α}
   (hq : q ∈ A) :
     Cone (K ⋙ (evaluation _ _).obj ⟨q⟩) where
   pt := T.pt.obj A
@@ -118,8 +117,47 @@ def lift {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐] [H
   {K : J ⥤ Discrete α ⥤ 𝓐} {E : Cone K} (hE : IsLimit E) (T : Cone (K ⋙ discreteToFinset α 𝓐)) :
     T.pt ⟶ ((discreteToFinset α 𝓐).mapCone E).pt where
   app := fun A => biproduct.lift fun ⟨q, hq⟩ =>
-    (isLimitOfPreserves ((evaluation (Discrete α) 𝓐).obj { as := q }) hE).lift (evalCone T q hq)
-  naturality := fun i j f => sorry
+    (isLimitOfPreserves ((evaluation (Discrete α) 𝓐).obj { as := q }) hE).lift (evalCone T hq)
+  naturality := fun i j f => by
+    apply biproduct.hom_ext ; rintro ⟨a, ha⟩
+    apply (isLimitOfPreserves ((evaluation (Discrete α) 𝓐).obj { as := a }) hE).hom_ext ; intro b
+    dsimp only [isLimitOfPreserves]
+    simp only [Category.assoc, biproduct.lift_π, Functor.mapCone_π_app, evaluation_obj_map]
+    have := (PreservesLimit.preserves hE).fac (preservesLimitAux.evalCone T ha) b
+    dsimp at this
+    rw [this]
+    simp only [NatTrans.naturality_assoc]
+    have q : NatTrans.app (NatTrans.app T.π b) i = (biproduct.lift fun ⟨ x, hx⟩ ↦
+      IsLimit.lift (PreservesLimit.preserves hE) (evalCone T hx)) ≫
+      biproduct.map (fun ℓ : {x // x ∈ i} => NatTrans.app (NatTrans.app E.π b) {as := ℓ}) := by
+        simp only [Functor.comp_obj, discreteToFinset_obj, finsetBiproductDiagram_obj]
+        ext ⟨n, hn⟩
+        simp only [biproduct.lift_map, biproduct.lift_π]
+        have := (PreservesLimit.preserves hE).fac (preservesLimitAux.evalCone T hn) b
+        dsimp at this
+        rw [this]
+    have qq : biproduct.map (fun ℓ : {x // x ∈ j} => NatTrans.app (NatTrans.app E.π b) {as := ℓ})
+      ≫ biproduct.π (fun s : {x // x ∈ j}↦ (K.obj b).obj { as := ↑s }) ⟨a, ha⟩
+      = biproduct.π (fun s : {x // x ∈ j} ↦ E.pt.obj { as := ↑s }) ⟨a, ha⟩
+      ≫ NatTrans.app (NatTrans.app E.π b) { as := a } := by simp
+    rw [q, ←qq]
+    have qqq : biproduct.map (fun ℓ : {x // x ∈ i} => NatTrans.app (NatTrans.app E.π b) {as := ℓ})
+      ≫ (biproduct.desc fun s : {x // x ∈ i} ↦ biproduct.ι (fun t :{x // x ∈ j}
+      ↦ (K.obj b).obj { as := ↑t }) ⟨s, Finset.mem_of_subset (leOfHom f) (s.2) ⟩ )
+      = ((biproduct.desc fun s : {x // x ∈ i} ↦ biproduct.ι
+      (fun t : {x // x ∈ j} ↦ E.pt.obj { as := ↑t }) ⟨s, Finset.mem_of_subset (leOfHom f) (s.2)⟩))
+      ≫ (biproduct.map (fun ℓ : {x // x ∈ j} => NatTrans.app (NatTrans.app E.π b) {as := ℓ})) := by
+        ext j'
+        simp [biproduct.ι_π, biproduct.ι_π_assoc]
+        split_ifs with h
+        · subst h ; simp
+        · simp
+    obtain fun1 : T.pt.obj i ⟶ ⨁ fun s : {x // x ∈ i}↦ E.pt.obj { as := ↑s }
+      := (biproduct.lift fun ⟨ x, hx⟩ ↦ IsLimit.lift (PreservesLimit.preserves hE) (evalCone T hx))
+    simp only [Category.assoc]
+    congr 1
+    simp at qqq
+    simp [qqq]
 
 end preservesLimitAux
 
@@ -134,7 +172,7 @@ instance preservesLimitsOfShapeDiscreteToFinset (α : Type v) {𝓐 : Type u} [C
       fac := fun s j => by
         ext A
         apply biproduct.hom_ext ; rintro ⟨a, ha⟩
-        have := (PreservesLimit.preserves hE).fac (preservesLimitAux.evalCone s a ha) j
+        have := (PreservesLimit.preserves hE).fac (preservesLimitAux.evalCone s ha) j
         dsimp at this
         rw [←this]
         simp only [NatTrans.comp_app, preservesLimitAux.lift_app]
@@ -150,7 +188,7 @@ instance preservesLimitsOfShapeDiscreteToFinset (α : Type v) {𝓐 : Type u} [C
           (isLimitOfPreserves ((evaluation (Discrete α) 𝓐).obj { as := a }) hE)
         apply hE'.hom_ext ; intro jj
         simp only [Functor.mapCone_π_app, evaluation_obj_map, biproduct.lift_π]
-        have := (PreservesLimit.preserves hE).fac (preservesLimitAux.evalCone s a ha) jj
+        have := (PreservesLimit.preserves hE).fac (preservesLimitAux.evalCone s ha) jj
         dsimp at this
         rw [this]
         simp [← (hh jj)]
