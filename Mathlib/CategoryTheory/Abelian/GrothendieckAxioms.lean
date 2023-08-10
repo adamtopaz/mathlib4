@@ -9,37 +9,42 @@ open Classical
 
 universe v u
 
-class AB4 (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐] where
+variable (𝓐 : Type u) [Category.{v} 𝓐]
+
+class AB4 [HasColimits 𝓐] where
   preservesFiniteLimits :
     ∀ (α : Type v), PreservesFiniteLimits (colim : (Discrete α ⥤ 𝓐) ⥤ 𝓐)
 
-instance (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐] [AB4 𝓐]
+instance [HasColimits 𝓐] [AB4 𝓐]
     (α : Type v) : PreservesFiniteLimits (colim : (Discrete α ⥤ 𝓐) ⥤ 𝓐) :=
   AB4.preservesFiniteLimits _
 
-class AB5 (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐] where
+class AB5 [HasColimits 𝓐] where
   preservesFiniteLimits :
     ∀ (J : Type v) [SmallCategory J] [IsFiltered J],
     PreservesFiniteLimits (colim : (J ⥤ 𝓐) ⥤ 𝓐)
 
-instance (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐] [AB5 𝓐]
+instance [HasColimits 𝓐] [AB5 𝓐]
     (J : Type v) [SmallCategory J] [IsFiltered J] :
     PreservesFiniteLimits (colim : (J ⥤ 𝓐) ⥤ 𝓐) :=
   AB5.preservesFiniteLimits _
 
+variable {𝓐} [Category.{v} 𝓐] [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐]
+
 /-- The diagram of all finite coproducts corresponding to subsets of α-/
 @[simps]
 noncomputable
-def finsetBiproductDiagram {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐]
-  (X : α → 𝓐) [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐]: Finset α ⥤ 𝓐 where
-    obj S := ⨁ (fun s : S => X s)
-    map {S T : Finset α} (i : S ⟶ T) :=
-      biproduct.desc fun s => biproduct.ι (fun t : T => X t) ⟨s.1, i.le s.2⟩
+def finsetBiproductDiagram {α : Type v} (X : α → 𝓐) :
+    Finset α ⥤ 𝓐 where
+  obj S := ⨁ (fun s : S => X s)
+  map {S T : Finset α} (i : S ⟶ T) :=
+    biproduct.desc fun s => biproduct.ι (fun t : T => X t) ⟨s.1, i.le s.2⟩
+
+variable [HasColimits 𝓐]
 
 @[simps]
 noncomputable
-def finsetBiproductColimitCocone {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] (X : α → 𝓐)
-  [HasColimits 𝓐] [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] :
+def finsetBiproductColimitCocone {α : Type v} (X : α → 𝓐) :
     Cocone (finsetBiproductDiagram X) where
   pt := ∐ X
   ι := {
@@ -47,8 +52,7 @@ def finsetBiproductColimitCocone {α : Type v} {𝓐 : Type u} [Category.{v} �
 
 @[simps]
 noncomputable
-def finsetCoproductColimitCoconeIsColimit {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐]
-  [HasColimits 𝓐] [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] (X : α → 𝓐) :
+def finsetCoproductColimitCoconeIsColimit {α : Type v} (X : α → 𝓐) :
     IsColimit (finsetBiproductColimitCocone X) where
   desc S :=
     Sigma.desc fun a => (biproduct.ι (fun b : ({a} : Finset α) => X b) ⟨a, by simp⟩) ≫ S.ι.app {a}
@@ -63,15 +67,13 @@ def finsetCoproductColimitCoconeIsColimit {α : Type v} {𝓐 : Type u} [Categor
 /-- Colimit of finsetBiproductDiagram is infact a coproduct-/
 @[simps!]
 noncomputable
-def coproductIsoColimitFinsetBiproduct {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] (X : α → 𝓐) [HasColimits 𝓐]
-  [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] :
+def coproductIsoColimitFinsetBiproduct {α : Type v} (X : α → 𝓐) :
     ∐ X ≅ colimit (finsetBiproductDiagram X) :=
   (finsetCoproductColimitCoconeIsColimit X).coconePointUniqueUpToIso (colimit.isColimit _)
 
 @[simps]
 noncomputable
-def finsetBiproductDiagramNatTrans {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐]
-  [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] {X Y : α → 𝓐} (η : X ⟶ Y) :
+def finsetBiproductDiagramNatTrans {α : Type v} {X Y : α → 𝓐} (η : X ⟶ Y) :
     finsetBiproductDiagram X ⟶ finsetBiproductDiagram Y where
   app S := biproduct.map fun b => η b
   naturality := fun X Y f => by
@@ -86,7 +88,7 @@ def finsetBiproductDiagramNatTrans {α : Type v} {𝓐 : Type u} [Category.{v} �
     sending all finite sets to finite coproducts-/
 @[simps]
 noncomputable
-def discreteToFinset (α : Type v) (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐]
+def discreteFunctorToFinsetBiproductDiagram (α : Type v) (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐]
   [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] :
     (Discrete α ⥤ 𝓐) ⥤ (Finset α ⥤ 𝓐) where
   obj := fun F => finsetBiproductDiagram (fun j => F.obj ⟨j⟩)
@@ -99,10 +101,8 @@ namespace preservesLimitAux
     Cone where our maps -/
 @[simps]
 noncomputable
-def evalCone {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐] {J : Type}
-  [SmallCategory J] [FinCategory J] [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐]
-  {K : J ⥤ Discrete α ⥤ 𝓐} (T : Cone (K ⋙ discreteToFinset α 𝓐)) {A : Finset α} {q : α}
-  (hq : q ∈ A) :
+def evalCone {α : Type v} {J : Type} [SmallCategory J] [FinCategory J] {K : J ⥤ Discrete α ⥤ 𝓐}
+  (T : Cone (K ⋙ discreteFunctorToFinsetBiproductDiagram α 𝓐)) {A : Finset α} {q : α} (hq : q ∈ A) :
     Cone (K ⋙ (evaluation _ _).obj ⟨q⟩) where
   pt := T.pt.obj A
   π := {
@@ -112,10 +112,10 @@ def evalCone {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐
 
 @[simps]
 noncomputable
-def lift {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐] [HasFiniteLimits 𝓐]
-  [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] {J : Type} [SmallCategory J] [FinCategory J]
-  {K : J ⥤ Discrete α ⥤ 𝓐} {E : Cone K} (hE : IsLimit E) (T : Cone (K ⋙ discreteToFinset α 𝓐)) :
-    T.pt ⟶ ((discreteToFinset α 𝓐).mapCone E).pt where
+def lift {α : Type v} [HasFiniteLimits 𝓐] {J : Type} [SmallCategory J] [FinCategory J]
+  {K : J ⥤ Discrete α ⥤ 𝓐} {E : Cone K} (hE : IsLimit E)
+  (T : Cone (K ⋙ discreteFunctorToFinsetBiproductDiagram α 𝓐)) :
+    T.pt ⟶ ((discreteFunctorToFinsetBiproductDiagram α 𝓐).mapCone E).pt where
   app := fun A => biproduct.lift fun ⟨q, hq⟩ =>
     (isLimitOfPreserves ((evaluation (Discrete α) 𝓐).obj { as := q }) hE).lift (evalCone T hq)
   naturality := fun i j f => by
@@ -130,7 +130,8 @@ def lift {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐] [H
     have q : NatTrans.app (NatTrans.app T.π b) i = (biproduct.lift fun ⟨ x, hx⟩ ↦
       IsLimit.lift (PreservesLimit.preserves hE) (evalCone T hx)) ≫
       biproduct.map (fun ℓ : {x // x ∈ i} => NatTrans.app (NatTrans.app E.π b) {as := ℓ}) := by
-        simp only [Functor.comp_obj, discreteToFinset_obj, finsetBiproductDiagram_obj]
+        simp only [Functor.comp_obj, discreteFunctorToFinsetBiproductDiagram_obj,
+          finsetBiproductDiagram_obj]
         ext ⟨n, hn⟩
         simp only [biproduct.lift_map, biproduct.lift_π]
         have := (PreservesLimit.preserves hE).fac (preservesLimitAux.evalCone T hn) b
@@ -162,10 +163,9 @@ def lift {α : Type v} {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐] [H
 end preservesLimitAux
 
 noncomputable
-instance preservesLimitsOfShapeDiscreteToFinset (α : Type v) {𝓐 : Type u} [Category.{v} 𝓐]
-  [HasColimits 𝓐] [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] [HasFiniteLimits 𝓐]
-  (J : Type) [SmallCategory J] [FinCategory J] :
-    PreservesLimitsOfShape J (discreteToFinset α 𝓐) where
+instance preservesLimitsOfShapeDiscreteToFinset (α : Type v) [HasFiniteLimits 𝓐] (J : Type)
+  [SmallCategory J] [FinCategory J] :
+    PreservesLimitsOfShape J (discreteFunctorToFinsetBiproductDiagram α 𝓐) where
   preservesLimit {K} := {
     preserves := fun E {hE} => {
       lift := fun T => preservesLimitAux.lift hE T
@@ -196,15 +196,14 @@ instance preservesLimitsOfShapeDiscreteToFinset (α : Type v) {𝓐 : Type u} [C
   }
 
 noncomputable
-instance (α : Type v) {𝓐 : Type u} [Category.{v} 𝓐] [HasColimits 𝓐] [HasZeroMorphisms 𝓐]
-  [HasFiniteBiproducts 𝓐] [HasFiniteLimits 𝓐] :
-    PreservesFiniteLimits (discreteToFinset α 𝓐) where
+instance (α : Type v) [HasFiniteLimits 𝓐] :
+    PreservesFiniteLimits (discreteFunctorToFinsetBiproductDiagram α 𝓐) where
   preservesFiniteLimits := fun _ => inferInstance
 
 noncomputable
 def colimIsoDiscreteToFinsetCompColim (α : Type v) (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐]
   [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] :
-    (colim : (Discrete α ⥤ 𝓐) ⥤ 𝓐) ≅ discreteToFinset α 𝓐 ⋙ colim :=
+    (colim : (Discrete α ⥤ 𝓐) ⥤ 𝓐) ≅ discreteFunctorToFinsetBiproductDiagram α 𝓐 ⋙ colim :=
   NatIso.ofComponents (fun F => HasColimit.isoOfNatIso (Discrete.natIsoFunctor (F := F))
   ≪≫ coproductIsoColimitFinsetBiproduct _) <| by
     rintro ⟨x⟩ ⟨y⟩ f
