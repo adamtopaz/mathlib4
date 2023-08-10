@@ -40,34 +40,35 @@ def finsetBiproductDiagram {α : Type v} (X : α → 𝓐) :
   map {S T : Finset α} (i : S ⟶ T) :=
     biproduct.desc fun s => biproduct.ι (fun t : T => X t) ⟨s.1, i.le s.2⟩
 
-variable [HasColimits 𝓐]
+--variable [HasColimits 𝓐]
 
 @[simps]
 noncomputable
-def finsetBiproductColimitCocone {α : Type v} (X : α → 𝓐) :
+def finsetBiproductColimitCocone {α : Type v} (X : α → 𝓐) [HasCoproduct X] :
     Cocone (finsetBiproductDiagram X) where
   pt := ∐ X
-  ι := {
-    app := fun S => biproduct.desc fun ⟨x, hx ⟩  => Sigma.ι _ _ }
+  ι := { app := fun S => biproduct.desc fun ⟨x, hx ⟩  => Sigma.ι _ _ }
 
 @[simps]
 noncomputable
-def finsetCoproductColimitCoconeIsColimit {α : Type v} (X : α → 𝓐) :
+def finsetCoproductColimitCoconeIsColimit {α : Type v} (X : α → 𝓐) [HasCoproduct X] :
     IsColimit (finsetBiproductColimitCocone X) where
   desc S :=
-    Sigma.desc fun a => (biproduct.ι (fun b : ({a} : Finset α) => X b) ⟨a, by simp⟩) ≫ S.ι.app {a}
+    Sigma.desc fun a => (biproduct.ι (fun b : ({a} : Finset α) => X b)
+      ⟨a, Finset.mem_singleton.mpr rfl⟩) ≫ S.ι.app {a}
   fac := fun c S => by
     apply biproduct.hom_ext' ; rintro ⟨b,hb⟩
     let e : ({b} : Finset α) ⟶ S := homOfLE (by simpa using hb)
     simp [← c.w e]
   uniq :=  fun _ _ h => by
     apply Sigma.hom_ext ; intro s
-    simp [←(h {s})]
+    simp [ ← h {s} ]
 
 /-- Colimit of finsetBiproductDiagram is infact a coproduct-/
 @[simps!]
 noncomputable
-def coproductIsoColimitFinsetBiproduct {α : Type v} (X : α → 𝓐) :
+def coproductIsoColimitFinsetBiproduct {α : Type v} (X : α → 𝓐)
+    [HasCoproduct X] [HasColimit (finsetBiproductDiagram X)]:
     ∐ X ≅ colimit (finsetBiproductDiagram X) :=
   (finsetCoproductColimitCoconeIsColimit X).coconePointUniqueUpToIso (colimit.isColimit _)
 
@@ -75,11 +76,12 @@ def coproductIsoColimitFinsetBiproduct {α : Type v} (X : α → 𝓐) :
 noncomputable
 def finsetBiproductDiagramNatTrans {α : Type v} {X Y : α → 𝓐} (η : X ⟶ Y) :
     finsetBiproductDiagram X ⟶ finsetBiproductDiagram Y where
-  app S := biproduct.map fun b => η b
+  app S := biproduct.map (η ·)
   naturality := fun X Y f => by
-    simp only [finsetBiproductDiagram_obj]
+    dsimp
     ext i j
-    simp [biproduct.ι_π, biproduct.ι_π_assoc]
+    simp only [Category.assoc, biproduct.map_π, biproduct.ι_desc_assoc,
+      ne_eq, biproduct.ι_π_assoc, biproduct.map_desc, biproduct.ι_π]
     split_ifs with h
     · subst h ; simp
     · simp
@@ -88,7 +90,7 @@ def finsetBiproductDiagramNatTrans {α : Type v} {X Y : α → 𝓐} (η : X ⟶
     sending all finite sets to finite coproducts-/
 @[simps]
 noncomputable
-def discreteFunctorToFinsetBiproductDiagram (α : Type v) (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐]
+def discreteFunctorToFinsetBiproductDiagram (α : Type v) (𝓐 : Type u) [Category.{v} 𝓐]
   [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] :
     (Discrete α ⥤ 𝓐) ⥤ (Finset α ⥤ 𝓐) where
   obj := fun F => finsetBiproductDiagram (fun j => F.obj ⟨j⟩)
@@ -96,12 +98,9 @@ def discreteFunctorToFinsetBiproductDiagram (α : Type v) (𝓐 : Type u) [Categ
 
 namespace preservesLimitAux
 
-/--
-    *** Thus K ⋙ discreteToFinset α 𝓐 sends j to "K j q" effectively
-    Cone where our maps -/
 @[simps]
 noncomputable
-def evalCone {α : Type v} {J : Type} [SmallCategory J] [FinCategory J] {K : J ⥤ Discrete α ⥤ 𝓐}
+def evalCone {α : Type v} {J : Type} [SmallCategory J] {K : J ⥤ Discrete α ⥤ 𝓐}
   (T : Cone (K ⋙ discreteFunctorToFinsetBiproductDiagram α 𝓐)) {A : Finset α} {q : α} (hq : q ∈ A) :
     Cone (K ⋙ (evaluation _ _).obj ⟨q⟩) where
   pt := T.pt.obj A
@@ -201,7 +200,8 @@ instance (α : Type v) [HasFiniteLimits 𝓐] :
   preservesFiniteLimits := fun _ => inferInstance
 
 noncomputable
-def colimIsoDiscreteToFinsetCompColim (α : Type v) (𝓐 : Type u) [Category.{v} 𝓐] [HasColimits 𝓐]
+def colimIsoDiscreteToFinsetCompColim (α : Type v) (𝓐 : Type u) [Category.{v} 𝓐]
+  [HasColimitsOfShape (Discrete α) 𝓐] [HasColimitsOfShape (Finset α) 𝓐]
   [HasZeroMorphisms 𝓐] [HasFiniteBiproducts 𝓐] :
     (colim : (Discrete α ⥤ 𝓐) ⥤ 𝓐) ≅ discreteFunctorToFinsetBiproductDiagram α 𝓐 ⋙ colim :=
   NatIso.ofComponents (fun F => HasColimit.isoOfNatIso (Discrete.natIsoFunctor (F := F))
