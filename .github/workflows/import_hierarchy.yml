@@ -1,7 +1,10 @@
 name: Import Hierarchy Graph
 
 on:
-  pull_request_target:
+  workflow_run:
+    workflows: ["continuous integration", "continuous integration (mathlib forks)"]
+    types:
+      - completed
 
 permissions:
   contents: read
@@ -11,23 +14,25 @@ jobs:
   import-hierarchy:
     name: Generate Import Hierarchy
     runs-on: ubuntu-latest
-    # if: github.repository == 'leanprover-community/mathlib4'
+    # Only run if the build workflow succeeded and there's an associated PR
+    if: ${{ github.event.workflow_run.conclusion == 'success' &&
+            github.event.workflow_run.pull_requests[0] }}
 
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
       - name: Get changed Mathlib files
         id: changed-files
         run: |
-          # Get the list of changed files compared to the base branch
-          git fetch origin ${{ github.base_ref }}
+          # Get the list of changed files compared to master
+          git fetch origin master
 
           # Get changed .lean files in Mathlib/ directory and convert to module names
-          changed_modules=$(git diff --name-only origin/${{ github.base_ref }}... | \
+          changed_modules=$(git diff --name-only origin/master... | \
             grep '^Mathlib/.*\.lean$' | \
             sed 's|/|.|g' | \
             sed 's|\.lean$||' | \
@@ -44,6 +49,15 @@ jobs:
 
           echo "Changed modules: $changed_modules"
 
+      - name: Download build artifacts
+        if: steps.changed-files.outputs.has_modules == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: mathlib4_artifact
+          path: .
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup elan
         if: steps.changed-files.outputs.has_modules == 'true'
         uses: leanprover/lean-action@v1
@@ -52,25 +66,16 @@ jobs:
           use-github-cache: false
           use-mathlib-cache: false
 
-      - name: Get Mathlib cache
-        if: steps.changed-files.outputs.has_modules == 'true'
-        run: |
-          lake exe cache get
-          lake exe cache --repo=${{ github.event.pull_request.head.repo.full_name || github.repository }} get
-
-      - name: Build Mathlib
-        if: steps.changed-files.outputs.has_modules == 'true'
-        run: |
-          lake build Mathlib
-
       - name: Build import_hierarchy executable
         if: steps.changed-files.outputs.has_modules == 'true'
+        working-directory: ./pr-branch
         run: |
           lake build import_hierarchy
 
       - name: Generate import hierarchy graph
         if: steps.changed-files.outputs.has_modules == 'true'
         id: generate-graph
+        working-directory: ./pr-branch
         run: |
           # Run the import_hierarchy executable with the changed modules
           mermaid_output=$(lake exe import_hierarchy ${{ steps.changed-files.outputs.modules }})
@@ -91,7 +96,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const mermaidContent = fs.readFileSync('import_hierarchy.txt', 'utf8');
+            const mermaidContent = fs.readFileSync('pr-branch/import_hierarchy.txt', 'utf8');
 
             const commentTitle = '### Import Hierarchy Graph';
             const body = `${commentTitle}
@@ -105,11 +110,13 @@ jobs:
             <sub>🤖 This comment is automatically updated when the PR is updated.</sub>
             `;
 
+            const prNumber = ${{ github.event.workflow_run.pull_requests[0].number }};
+
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
+              issue_number: prNumber,
             });
 
             const existingComment = comments.find(comment =>
@@ -130,7 +137,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
+                issue_number: prNumber,
                 body: body,
               });
               console.log('Created new comment');
