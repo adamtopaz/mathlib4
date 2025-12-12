@@ -34,9 +34,16 @@ def transitiveReduction (tc : HashMap Name (HashSet Name)) :
     Arrow `a --> b` means `a` is a (reduced) transitive import of `b`. -/
 def toMermaid (graph : HashMap Name (HashSet Name)) : String := Id.run do
   let mut lines : Array String := #["flowchart TD"]
+  let mut nodesWithEdges : HashSet Name := {}
   for (node, imports) in graph do
     for imp in imports do
       lines := lines.push s!"  {imp} --> {node}"
+      nodesWithEdges := nodesWithEdges.insert node
+      nodesWithEdges := nodesWithEdges.insert imp
+  -- Add isolated nodes (nodes with no edges)
+  for (node, _) in graph do
+    if !nodesWithEdges.contains node then
+      lines := lines.push s!"  {node}"
   return "\n".intercalate lines.toList
 
 public def main (args : List String) : IO UInt32 := do
