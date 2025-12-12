@@ -50,7 +50,18 @@ jobs:
         with:
           auto-config: false
           use-github-cache: false
-          use-mathlib-cache: true
+          use-mathlib-cache: false
+
+      - name: Get Mathlib cache
+        if: steps.changed-files.outputs.has_modules == 'true'
+        run: |
+          lake exe cache get
+          lake exe cache --repo=${{ github.event.pull_request.head.repo.full_name || github.repository }} get
+
+      - name: Build Mathlib
+        if: steps.changed-files.outputs.has_modules == 'true'
+        run: |
+          lake build Mathlib
 
       - name: Build import_hierarchy executable
         if: steps.changed-files.outputs.has_modules == 'true'
