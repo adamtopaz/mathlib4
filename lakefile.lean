@@ -154,6 +154,11 @@ lean_exe unused where
 lean_exe mathlib_test_executable where
   root := `MathlibTest.MathlibTestExecutable
 
+lean_exe import_hierarchy where
+  root := `ImportHierarchy.Main
+  supportInterpreter := true
+  leanOptions := #[⟨`experimental.module, true⟩]
+
 /-!
 ## Other configuration
 -/
