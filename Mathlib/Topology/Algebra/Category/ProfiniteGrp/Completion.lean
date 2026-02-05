@@ -113,8 +113,7 @@ def preimage (f : G ⟶ GrpCat.of P) (H : OpenNormalSubgroup P) : FiniteIndexSub
     haveI : Finite g.range := by infer_instance
     simpa [hker] using (inferInstance : g.ker.FiniteIndex)
 
-/-- Monotonicity of `preimage` in the subgroup argument. -/
-def preimage_le {f : G ⟶ GrpCat.of P} {H K : OpenNormalSubgroup P}
+lemma preimage_le {f : G ⟶ GrpCat.of P} {H K : OpenNormalSubgroup P}
     (h : H ≤ K) : preimage f H ≤ preimage f K := fun _ hx => h hx
 
 /-- The induced map on finite quotients coming from a morphism to `P`. -/
