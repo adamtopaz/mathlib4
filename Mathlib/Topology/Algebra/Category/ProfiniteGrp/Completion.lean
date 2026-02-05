@@ -50,8 +50,8 @@ variable (G : GrpCat.{u})
 def finiteGrpDiagram : FiniteIndexSubgroup G ⥤ FiniteGrp.{u} where
   obj H := FiniteGrp.of <| G ⧸ H.toSubgroup
   map f := FiniteGrp.ofHom <| QuotientGroup.map _ _ (MonoidHom.id _) f.le
-  map_id H := by ext ⟨x⟩ ; rfl
-  map_comp f g := by ext ⟨x⟩ ; rfl
+  map_id H := by ext ⟨x⟩; rfl
+  map_comp f g := by ext ⟨x⟩; rfl
 
 /-- The finite-quotient diagram viewed in `ProfiniteGrp`. -/
 def diagram : FiniteIndexSubgroup G ⥤ ProfiniteGrp.{u} :=
@@ -184,7 +184,7 @@ def homEquiv (G : GrpCat.{u}) (P : ProfiniteGrp.{u}) :
     (completion G ⟶ P) ≃ (G ⟶ GrpCat.of P) where
   toFun f := eta G ≫ (forget₂ _ _).map f
   invFun f := lift f
-  left_inv f := by apply lift_unique ; simp
+  left_inv f := by apply lift_unique; simp
   right_inv f := by simp
 
 /-- The profinite completion is left adjoint to the forgetful functor. -/
