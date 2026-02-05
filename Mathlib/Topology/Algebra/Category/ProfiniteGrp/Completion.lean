@@ -23,6 +23,8 @@ universe u v
 
 open CategoryTheory
 
+namespace ProfiniteGrp
+
 /-- A normal subgroup of finite index. -/
 @[ext]
 structure FiniteIndexNormalSubgroup (G : Type u) [Group G] extends Subgroup G where
@@ -62,8 +64,6 @@ def finiteQuotientFunctor (G : Type u) [Group G] :
   map_comp f g := ConcreteCategory.ext <|
     (QuotientGroup.map_comp_map _ _ _ (.id _) (.id _) (leOfHom f) (leOfHom g)).symm
 
-namespace ProfiniteCompletion
-
 variable (G : Type u) [Group G]
 
 abbrev completionDiagram : FiniteIndexNormalSubgroup G ⥤ ProfiniteGrp :=
@@ -71,11 +71,11 @@ abbrev completionDiagram : FiniteIndexNormalSubgroup G ⥤ ProfiniteGrp :=
 
 /-- The profinite completion of a group. -/
 abbrev profiniteCompletion : ProfiniteGrp :=
-  ProfiniteGrp.limit (completionDiagram G)
+  limit (completionDiagram G)
 
 abbrev proj (N : FiniteIndexNormalSubgroup G) :
     profiniteCompletion G ⟶ (completionDiagram G).obj N :=
-  (ProfiniteGrp.limitCone (completionDiagram G)).π.app N
+  (limitCone (completionDiagram G)).π.app N
 
 /-- The canonical map into the profinite completion. -/
 def eta : G →* profiniteCompletion G where
@@ -142,7 +142,7 @@ def liftFinite (F : FiniteGrp) (f : G →* F) :
   let fbar : Q →* F := by
     simpa using (QuotientGroup.kerLift f)
   let fbar_cont : Q →ₜ* F := { fbar with continuous_toFun := by continuity }
-  exact proj G N ≫ ProfiniteGrp.ofHom fbar_cont
+  exact proj G N ≫ ofHom fbar_cont
 
 @[simp]
 lemma liftFinite_eta (F : FiniteGrp) (f : G →* F) (g : G) :
@@ -162,14 +162,14 @@ lemma liftFinite_eta (F : FiniteGrp) (f : G →* F) (g : G) :
 
 @[simp]
 lemma liftFinite_hom_eta (F : FiniteGrp) (f : G →* F) (g : G) :
-    (ProfiniteGrp.Hom.hom (liftFinite (G := G) F f)) (eta G g) = f g := by
+    (Hom.hom (liftFinite (G := G) F f)) (eta G g) = f g := by
   simpa using (liftFinite_eta (G := G) F f g)
 
 theorem liftFinite_unique (F : FiniteGrp) (f : G →* F)
     (α : profiniteCompletion G ⟶ (forget₂ FiniteGrp ProfiniteGrp).obj F)
     (hα : ∀ g, α (eta G g) = f g) :
     α = liftFinite (G := G) F f := by
-  apply ProfiniteGrp.hom_ext
+  apply hom_ext
   apply DFunLike.ext
   have hη : Dense (Set.range (eta G)) := by
     simpa [DenseRange] using (denseRange_eta (G := G))
@@ -189,15 +189,15 @@ variable (G)
 
 def liftToFiniteQuotient {P : ProfiniteGrp.{u}} (f : G →* P) (U : OpenNormalSubgroup P) :
     profiniteCompletion G ⟶
-      (forget₂ FiniteGrp ProfiniteGrp).obj ((ProfiniteGrp.toFiniteQuotientFunctor P).obj U) :=
-  liftFinite (G := G) ((ProfiniteGrp.toFiniteQuotientFunctor P).obj U)
+      (forget₂ FiniteGrp ProfiniteGrp).obj ((toFiniteQuotientFunctor P).obj U) :=
+  liftFinite (G := G) ((toFiniteQuotientFunctor P).obj U)
     ((QuotientGroup.mk' U.toSubgroup).comp f)
 
 @[simp]
 lemma toFiniteQuotientFunctor_forget_map_apply {P : ProfiniteGrp.{u}}
     {U V : OpenNormalSubgroup P} (h : U ⟶ V)
-    (x : (ProfiniteGrp.toFiniteQuotientFunctor P).obj U) :
-    ((forget₂ FiniteGrp ProfiniteGrp).map ((ProfiniteGrp.toFiniteQuotientFunctor P).map h)) x =
+    (x : (toFiniteQuotientFunctor P).obj U) :
+    ((forget₂ FiniteGrp ProfiniteGrp).map ((toFiniteQuotientFunctor P).map h)) x =
       (QuotientGroup.map _ _ (.id _) (leOfHom h)) x := rfl
 
 @[simp]
@@ -206,7 +206,7 @@ lemma forget₂_map_ofHom_apply {X Y : Type u} [Group X] [Finite X] [Group Y] [F
     ((forget₂ FiniteGrp ProfiniteGrp).map (FiniteGrp.ofHom f)) x = f x := rfl
 
 def coneToFiniteQuotients {P : ProfiniteGrp.{u}} (f : G →* P) :
-    Limits.Cone (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp) where
+    Limits.Cone (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp) where
   pt := profiniteCompletion G
   π :=
   { app := fun U => liftToFiniteQuotient (G := G) f U
@@ -216,21 +216,21 @@ def coneToFiniteQuotients {P : ProfiniteGrp.{u}} (f : G →* P) :
         Category.id_comp, Functor.comp_map]
       symm
       apply liftFinite_unique (G := G)
-        ((ProfiniteGrp.toFiniteQuotientFunctor P).obj V)
+        ((toFiniteQuotientFunctor P).obj V)
         ((QuotientGroup.mk' V.toSubgroup).comp f)
       intro g
       have h_lift :
           (liftToFiniteQuotient (G := G) f U) (eta G g) =
             ((QuotientGroup.mk' U.toSubgroup).comp f) g := by
         simpa [liftToFiniteQuotient] using (liftFinite_eta (G := G)
-          ((ProfiniteGrp.toFiniteQuotientFunctor P).obj U)
+          ((toFiniteQuotientFunctor P).obj U)
           ((QuotientGroup.mk' U.toSubgroup).comp f) g)
       calc
         (liftToFiniteQuotient (G := G) f U ≫
-            (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp).map h)
+            (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp).map h)
             (eta G g) =
           ((forget₂ FiniteGrp ProfiniteGrp).map
-              ((ProfiniteGrp.toFiniteQuotientFunctor P).map h))
+              ((toFiniteQuotientFunctor P).map h))
             (liftToFiniteQuotient (G := G) f U (eta G g)) := by
           simp
         _ = (QuotientGroup.map _ _ (.id _) (leOfHom h))
@@ -241,205 +241,196 @@ def coneToFiniteQuotients {P : ProfiniteGrp.{u}} (f : G →* P) :
 
 def liftToLimit {P : ProfiniteGrp.{u}} (f : G →* P) :
     profiniteCompletion G ⟶
-      ProfiniteGrp.limit
-        (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp) :=
-  (ProfiniteGrp.limitConeIsLimit
-      (F := ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).lift
+      limit (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp) :=
+  (limitConeIsLimit
+      (F := toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).lift
     (coneToFiniteQuotients (G := G) f)
 
 def lift {P : ProfiniteGrp.{u}} (f : G →* P) : profiniteCompletion G ⟶ P :=
-  liftToLimit (G := G) f ≫ inv (ProfiniteGrp.toLimit P)
+  liftToLimit (G := G) f ≫ inv (toLimit P)
 
 theorem lift_eta {P : ProfiniteGrp.{u}} (f : G →* P) (g : G) :
     lift (G := G) f (eta G g) = f g := by
   classical
   have hproj : (liftToLimit (G := G) f) (eta G g) =
-      ProfiniteGrp.toLimit P (f g) := by
-    apply ProfiniteGrp.limit_ext
+      toLimit P (f g) := by
+    apply limit_ext
     intro U
     have hfac :
         liftToLimit (G := G) f ≫
-            (ProfiniteGrp.limitCone
-              (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U =
+            (limitCone (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U =
           liftToFiniteQuotient (G := G) f U := by
       simpa [liftToLimit] using
-        (ProfiniteGrp.limitConeIsLimit
-          (F := ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).fac
+        (limitConeIsLimit
+          (F := toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).fac
           (coneToFiniteQuotients (G := G) f) U
     have hfac' :
         (liftToLimit (G := G) f ≫
-            (ProfiniteGrp.limitCone
-              (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U)
+            (limitCone (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U)
             (eta G g) =
           (liftToFiniteQuotient (G := G) f U) (eta G g) := by
-      simpa [ProfiniteGrp.comp_apply] using
+      simpa [comp_apply] using
         congrArg (fun h => h (eta G g)) hfac
     calc
-      (ProfiniteGrp.limitCone
-        (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U
+      (limitCone (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U
           (liftToLimit (G := G) f (eta G g)) =
         (liftToFiniteQuotient (G := G) f U) (eta G g) := by
-          simpa [ProfiniteGrp.comp_apply] using hfac'
+          simpa [comp_apply] using hfac'
       _ = ((QuotientGroup.mk' U.toSubgroup).comp f) g := by
         simpa [liftToFiniteQuotient] using
           (liftFinite_eta (G := G)
-            ((ProfiniteGrp.toFiniteQuotientFunctor P).obj U)
+            ((toFiniteQuotientFunctor P).obj U)
             ((QuotientGroup.mk' U.toSubgroup).comp f) g)
-      _ = (ProfiniteGrp.limitCone
-        (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U
-          (ProfiniteGrp.toLimit P (f g)) := rfl
+      _ = (limitCone (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U
+          (toLimit P (f g)) := rfl
   have hcomp_morph :
-      lift (G := G) f ≫ ProfiniteGrp.toLimit P = liftToLimit (G := G) f := by
+      lift (G := G) f ≫ toLimit P = liftToLimit (G := G) f := by
     simp [lift, Category.assoc]
   have hcomp :
-      (ProfiniteGrp.toLimit P) (lift (G := G) f (eta G g)) =
+      (toLimit P) (lift (G := G) f (eta G g)) =
         (liftToLimit (G := G) f) (eta G g) := by
-    simpa [ProfiniteGrp.comp_apply] using
+    simpa [comp_apply] using
       congrArg (fun h => h (eta G g)) hcomp_morph
   have hcomp' :
-      (ProfiniteGrp.toLimit P) (lift (G := G) f (eta G g)) =
-        (ProfiniteGrp.toLimit P) (f g) := by
+      (toLimit P) (lift (G := G) f (eta G g)) =
+        (toLimit P) (f g) := by
     simpa [hproj] using hcomp
-  exact (ProfiniteGrp.toLimit_injective P) hcomp'
+  exact (toLimit_injective P) hcomp'
 
 @[simp]
 theorem lift_hom_eta {P : ProfiniteGrp.{u}} (f : G →* P) (g : G) :
-    (ProfiniteGrp.Hom.hom (lift (G := G) f)) (eta G g) = f g := by
+    (Hom.hom (lift (G := G) f)) (eta G g) = f g := by
   simpa using (lift_eta (G := G) (P := P) f g)
 
 theorem lift_unique {P : ProfiniteGrp.{u}} (f : G →* P)
-    (α : profiniteCompletion G ⟶ P) (hα : ∀ g, α (eta G g) = f g) :
+  (α : profiniteCompletion G ⟶ P) (hα : ∀ g, α (eta G g) = f g) :
     α = lift (G := G) f := by
-  apply ProfiniteGrp.hom_ext
+  apply hom_ext
   apply DFunLike.ext
   intro x
-  apply (ProfiniteGrp.toLimit_injective P)
-  have h₁ : (ProfiniteGrp.toLimit P) (α x) =
+  apply (toLimit_injective P)
+  have h₁ : (toLimit P) (α x) =
       (liftToLimit (G := G) f) x := by
-    apply ProfiniteGrp.limit_ext
+    apply limit_ext
     intro U
     have hcomp' :
-        (α ≫ ProfiniteGrp.toLimit P ≫
-          (ProfiniteGrp.limitCone
-            (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U) =
+        (α ≫ toLimit P ≫
+          (limitCone (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U) =
         (liftToFiniteQuotient (G := G) f U) := by
       apply liftFinite_unique (G := G)
-        ((ProfiniteGrp.toFiniteQuotientFunctor P).obj U)
+        ((toFiniteQuotientFunctor P).obj U)
         ((QuotientGroup.mk' U.toSubgroup).comp f)
       intro g
       calc
-        (α ≫ ProfiniteGrp.toLimit P ≫
-            (ProfiniteGrp.limitCone
-              (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U)
+        (α ≫ toLimit P ≫
+            (limitCone (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U)
             (eta G g) =
-          (ProfiniteGrp.toLimit P ≫
-            (ProfiniteGrp.limitCone
-            (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U)
+          (toLimit P ≫
+            (limitCone (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U)
             (α (eta G g)) := by
           simp
-        _ = (ProfiniteGrp.toLimit P ≫
-            (ProfiniteGrp.limitCone
-              (ProfiniteGrp.toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U)
+        _ = (toLimit P ≫
+            (limitCone (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)).π.app U)
             (f g) := by
           rw [hα g]
         _ = ((QuotientGroup.mk' U.toSubgroup).comp f) g := by
           rfl
-    simpa [ProfiniteGrp.comp_apply] using congrArg (fun h => h x) hcomp'
+    simpa [comp_apply] using congrArg (fun h => h x) hcomp'
   have h₂ :
-      (ProfiniteGrp.toLimit P) (lift (G := G) f x) =
+      (toLimit P) (lift (G := G) f x) =
         (liftToLimit (G := G) f) x := by
     have hcomp_morph :
-        lift (G := G) f ≫ ProfiniteGrp.toLimit P = liftToLimit (G := G) f := by
+        lift (G := G) f ≫ toLimit P = liftToLimit (G := G) f := by
       simp [lift, Category.assoc]
-    simpa [ProfiniteGrp.comp_apply] using congrArg (fun h => h x) hcomp_morph
+    simpa [comp_apply] using congrArg (fun h => h x) hcomp_morph
   calc
-    (ProfiniteGrp.toLimit P) (α x) = (liftToLimit (G := G) f) x := h₁
-    _ = (ProfiniteGrp.toLimit P) (lift (G := G) f x) := by
+    (toLimit P) (α x) = (liftToLimit (G := G) f) x := h₁
+    _ = (toLimit P) (lift (G := G) f x) := by
       symm
       exact h₂
 
-end ProfiniteCompletion
+end ProfiniteGrp
 
 namespace GrpCat
 
-open ProfiniteCompletion
+open ProfiniteGrp
 
 /-- The profinite completion functor. -/
 def profiniteCompletion : GrpCat.{u} ⥤ ProfiniteGrp.{u} where
-  obj G := ProfiniteCompletion.profiniteCompletion (G := (G : Type u))
+  obj G := ProfiniteGrp.profiniteCompletion (G := (G : Type u))
   map := fun {G H} f =>
-    ProfiniteCompletion.lift (G := (G : Type u))
-      ((ProfiniteCompletion.eta (G := (H : Type u))).comp f.hom)
+    lift (G := (G : Type u))
+      ((eta (G := (H : Type u))).comp f.hom)
   map_id := by
     intro G
     symm
-    apply ProfiniteCompletion.lift_unique (G := (G : Type u))
-      (P := ProfiniteCompletion.profiniteCompletion (G := (G : Type u)))
-      (f := ProfiniteCompletion.eta (G := (G : Type u)))
+    apply lift_unique (G := (G : Type u))
+      (P := ProfiniteGrp.profiniteCompletion (G := (G : Type u)))
+      (f := eta (G := (G : Type u)))
     intro g
     simp
   map_comp := by
     intro G H K f g
     symm
-    apply ProfiniteCompletion.lift_unique (G := (G : Type u))
-      (P := ProfiniteCompletion.profiniteCompletion (G := (K : Type u)))
-      (f := (ProfiniteCompletion.eta (G := (K : Type u))).comp (g.hom.comp f.hom))
+    apply lift_unique (G := (G : Type u))
+      (P := ProfiniteGrp.profiniteCompletion (G := (K : Type u)))
+      (f := (eta (G := (K : Type u))).comp (g.hom.comp f.hom))
     intro x
     have h₁ :
-        ProfiniteCompletion.lift (G := (G : Type u))
-            ((ProfiniteCompletion.eta (G := (H : Type u))).comp f.hom)
-            (ProfiniteCompletion.eta (G := (G : Type u)) x) =
-          ProfiniteCompletion.eta (G := (H : Type u)) (f.hom x) := by
+        lift (G := (G : Type u))
+            ((eta (G := (H : Type u))).comp f.hom)
+            (eta (G := (G : Type u)) x) =
+          eta (G := (H : Type u)) (f.hom x) := by
       simpa using
-        (ProfiniteCompletion.lift_hom_eta (G := (G : Type u))
-          (P := ProfiniteCompletion.profiniteCompletion (G := (H : Type u)))
-          ((ProfiniteCompletion.eta (G := (H : Type u))).comp f.hom) x)
+        (lift_hom_eta (G := (G : Type u))
+          (P := ProfiniteGrp.profiniteCompletion (G := (H : Type u)))
+          ((eta (G := (H : Type u))).comp f.hom) x)
     have h₂ :
-        ProfiniteCompletion.lift (G := (H : Type u))
-            ((ProfiniteCompletion.eta (G := (K : Type u))).comp g.hom)
-            (ProfiniteCompletion.eta (G := (H : Type u)) (f.hom x)) =
-          ProfiniteCompletion.eta (G := (K : Type u)) (g.hom (f.hom x)) := by
+        lift (G := (H : Type u))
+            ((eta (G := (K : Type u))).comp g.hom)
+            (eta (G := (H : Type u)) (f.hom x)) =
+          eta (G := (K : Type u)) (g.hom (f.hom x)) := by
       simpa using
-        (ProfiniteCompletion.lift_hom_eta (G := (H : Type u))
-          (P := ProfiniteCompletion.profiniteCompletion (G := (K : Type u)))
-          ((ProfiniteCompletion.eta (G := (K : Type u))).comp g.hom) (f.hom x))
+        (lift_hom_eta (G := (H : Type u))
+          (P := ProfiniteGrp.profiniteCompletion (G := (K : Type u)))
+          ((eta (G := (K : Type u))).comp g.hom) (f.hom x))
     calc
-      (ProfiniteCompletion.lift (G := (G : Type u))
-          ((ProfiniteCompletion.eta (G := (H : Type u))).comp f.hom) ≫
-        ProfiniteCompletion.lift (G := (H : Type u))
-          ((ProfiniteCompletion.eta (G := (K : Type u))).comp g.hom))
-          (ProfiniteCompletion.eta (G := (G : Type u)) x) =
-        ProfiniteCompletion.lift (G := (H : Type u))
-          ((ProfiniteCompletion.eta (G := (K : Type u))).comp g.hom)
-          (ProfiniteCompletion.eta (G := (H : Type u)) (f.hom x)) := by
-        simpa [ProfiniteGrp.comp_apply] using
+      (lift (G := (G : Type u))
+          ((eta (G := (H : Type u))).comp f.hom) ≫
+        lift (G := (H : Type u))
+          ((eta (G := (K : Type u))).comp g.hom))
+          (eta (G := (G : Type u)) x) =
+        lift (G := (H : Type u))
+          ((eta (G := (K : Type u))).comp g.hom)
+          (eta (G := (H : Type u)) (f.hom x)) := by
+        simpa [comp_apply] using
           congrArg
-            (ProfiniteGrp.Hom.hom (ProfiniteCompletion.lift (G := (H : Type u))
-              ((ProfiniteCompletion.eta (G := (K : Type u))).comp g.hom))) h₁
-      _ = ProfiniteCompletion.eta (G := (K : Type u)) (g.hom (f.hom x)) := h₂
+            (ProfiniteGrp.Hom.hom (lift (G := (H : Type u))
+              ((eta (G := (K : Type u))).comp g.hom))) h₁
+      _ = eta (G := (K : Type u)) (g.hom (f.hom x)) := h₂
 
 /-- The unit of the profinite completion adjunction. -/
 def profiniteCompletionUnit (G : GrpCat.{u}) :
     G ⟶ (forget₂ ProfiniteGrp GrpCat).obj (profiniteCompletion.obj G) :=
-  GrpCat.ofHom (ProfiniteCompletion.eta (G := (G : Type u)))
+  GrpCat.ofHom (eta (G := (G : Type u)))
 
 def profiniteCompletionHomEquiv (G : GrpCat.{u}) (P : ProfiniteGrp.{u}) :
     (profiniteCompletion.obj G ⟶ P) ≃
       (G ⟶ (forget₂ ProfiniteGrp GrpCat).obj P) where
   toFun α := profiniteCompletionUnit G ≫ (forget₂ ProfiniteGrp GrpCat).map α
-  invFun f := ProfiniteCompletion.lift (G := (G : Type u)) f.hom
+  invFun f := lift (G := (G : Type u)) f.hom
   left_inv α := by
     symm
-    apply ProfiniteCompletion.lift_unique (G := (G : Type u)) (P := P)
+    apply lift_unique (G := (G : Type u)) (P := P)
       (f := (profiniteCompletionUnit G ≫ (forget₂ ProfiniteGrp GrpCat).map α).hom)
     intro g
     rfl
   right_inv f := by
     apply GrpCat.ext
     intro g
-    change (ProfiniteGrp.Hom.hom (ProfiniteCompletion.lift (G := (G : Type u)) f.hom))
-        (ProfiniteCompletion.eta (G := (G : Type u)) g) = f.hom g
-    simpa using (ProfiniteCompletion.lift_hom_eta (G := (G : Type u)) (P := P) f.hom g)
+    change (ProfiniteGrp.Hom.hom (lift (G := (G : Type u)) f.hom))
+        (eta (G := (G : Type u)) g) = f.hom g
+    simpa using (lift_hom_eta (G := (G : Type u)) (P := P) f.hom g)
 
 /-- The profinite completion adjunction. -/
 def profiniteCompletionAdj : profiniteCompletion.{u} ⊣ forget₂ ProfiniteGrp GrpCat :=
@@ -448,30 +439,30 @@ def profiniteCompletionAdj : profiniteCompletion.{u} ⊣ forget₂ ProfiniteGrp 
       homEquiv_naturality_left_symm := by
         intro G H P f g
         symm
-        apply ProfiniteCompletion.lift_unique (G := (G : Type u)) (P := P)
+        apply lift_unique (G := (G : Type u)) (P := P)
           (f := g.hom.comp f.hom)
         intro x
         have h₁ :
-            profiniteCompletion.map f (ProfiniteCompletion.eta (G := (G : Type u)) x) =
-              ProfiniteCompletion.eta (G := (H : Type u)) (f.hom x) := by
+            profiniteCompletion.map f (eta (G := (G : Type u)) x) =
+              eta (G := (H : Type u)) (f.hom x) := by
           simpa [profiniteCompletion] using
-            (ProfiniteCompletion.lift_hom_eta (G := (G : Type u))
-              (P := ProfiniteCompletion.profiniteCompletion (G := (H : Type u)))
-              ((ProfiniteCompletion.eta (G := (H : Type u))).comp f.hom) x)
+            (lift_hom_eta (G := (G : Type u))
+              (P := ProfiniteGrp.profiniteCompletion (G := (H : Type u)))
+              ((eta (G := (H : Type u))).comp f.hom) x)
         have h₂ :
             (H.profiniteCompletionHomEquiv P).symm g
-                (ProfiniteCompletion.eta (G := (H : Type u)) (f.hom x)) =
+                (eta (G := (H : Type u)) (f.hom x)) =
               (g.hom.comp f.hom) x := by
           simpa [profiniteCompletionHomEquiv, MonoidHom.comp_apply] using
-            (ProfiniteCompletion.lift_hom_eta (G := (H : Type u)) (P := P) g.hom (f.hom x))
+            (lift_hom_eta (G := (H : Type u)) (P := P) g.hom (f.hom x))
         calc
           (profiniteCompletion.map f ≫ (H.profiniteCompletionHomEquiv P).symm g)
-              (ProfiniteCompletion.eta (G := (G : Type u)) x) =
+              (eta (G := (G : Type u)) x) =
             (H.profiniteCompletionHomEquiv P).symm g
-              (profiniteCompletion.map f (ProfiniteCompletion.eta (G := (G : Type u)) x)) := by
+              (profiniteCompletion.map f (eta (G := (G : Type u)) x)) := by
             simp
           _ = (H.profiniteCompletionHomEquiv P).symm g
-              (ProfiniteCompletion.eta (G := (H : Type u)) (f.hom x)) := by
+              (eta (G := (H : Type u)) (f.hom x)) := by
             simpa using
               congrArg (fun y => (H.profiniteCompletionHomEquiv P).symm g y) h₁
           _ = (g.hom.comp f.hom) x := h₂ }
