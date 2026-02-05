@@ -137,7 +137,7 @@ Algorithm:
 * For such a parameter name `p` at index `i`, compute `dependencies` as the set of
   level parameter names appearing in the *later* universe arguments
   `constLevels[i+1..]` (excluding `p` itself).
-* Remove `p` from the current list (if present), then insert it immediately after
+* Remove `p` from the current list, then insert it immediately after
   the last occurrence of any name in `dependencies`. If no dependency occurs in
   the list, insert `p` at the front.
 
