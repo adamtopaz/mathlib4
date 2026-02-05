@@ -50,9 +50,10 @@ def toFiniteQuotientFunctor (P : ProfiniteGrp) : OpenNormalSubgroup P ⥤ Finite
   map_comp f g := ConcreteCategory.ext <| (QuotientGroup.map_comp_map
     _ _ _ (.id _) (.id _) (leOfHom f) (leOfHom g)).symm
 
+/-- The diagram of finite quotients of `P` viewed in `ProfiniteGrp`. -/
 @[simps! obj map]
-def diagram (P : ProfiniteGrp.{u}) : OpenNormalSubgroup P ⥤ ProfiniteGrp.{u} := 
-  toFiniteQuotientFunctor P ⋙  forget₂ FiniteGrp ProfiniteGrp
+def diagram (P : ProfiniteGrp.{u}) : OpenNormalSubgroup P ⥤ ProfiniteGrp.{u} :=
+  toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp
 
 /-- The `MonoidHom` from a profinite group `P` to the projective limit of its quotients by
 open normal subgroups ordered by inclusion -/
@@ -141,7 +142,8 @@ noncomputable def isoLimittoFiniteQuotientFunctor (P : ProfiniteGrp.{u}) :
     P ≅ (limit <| diagram P) :=
   ContinuousMulEquiv.toProfiniteGrpIso (continuousMulEquivLimittoFiniteQuotientFunctor P)
 
-def proj {P : ProfiniteGrp.{u}} (U : OpenNormalSubgroup P) : P ⟶ (diagram P).obj U := 
+/-- The projection from `P` to the quotient by an open normal subgroup. -/
+def proj {P : ProfiniteGrp.{u}} (U : OpenNormalSubgroup P) : P ⟶ (diagram P).obj U :=
   ProfiniteGrp.ofHom (Y := (diagram P).obj U) {
     toFun := QuotientGroup.mk
     map_one' := rfl
@@ -150,14 +152,15 @@ def proj {P : ProfiniteGrp.{u}} (U : OpenNormalSubgroup P) : P ⟶ (diagram P).o
       fun_prop
   }
 
+/-- The canonical cone over `diagram P` with tip `P`. -/
 @[simps]
 def cone (P : ProfiniteGrp.{u}) : Limits.Cone (diagram P) where
   pt := P
   π := { app := proj }
 
-noncomputable def isLimitCone (P : ProfiniteGrp.{u}) : Limits.IsLimit P.cone := 
+/-- The canonical cone over `diagram P` is a limit cone. -/
+noncomputable def isLimitCone (P : ProfiniteGrp.{u}) : Limits.IsLimit P.cone :=
   Limits.IsLimit.ofIsoLimit (limitConeIsLimit _) <| .symm <| 
     Limits.Cones.ext (isoLimittoFiniteQuotientFunctor _) fun _ => rfl
 
 end ProfiniteGrp
-

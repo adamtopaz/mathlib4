@@ -227,9 +227,10 @@ def ofFiniteGrp (G : FiniteGrp) : ProfiniteGrp :=
   letI : IsTopologicalGroup G := {}
   of G
 
-@[to_additive /-- A `FiniteAddGrp` when given the discrete topology can be considered as a
-profinite additive group. -/]
-def ofFiniteGrpHom {G H : FiniteGrp.{u}} (f : G ⟶ H) : ofFiniteGrp G ⟶ ofFiniteGrp H := 
+/-- A morphism of `FiniteGrp` induces a morphism of the associated profinite groups. -/
+@[to_additive /-- A morphism of `FiniteAddGrp` induces a morphism of the associated profinite
+additive groups. -/]
+def ofFiniteGrpHom {G H : FiniteGrp.{u}} (f : G ⟶ H) : ofFiniteGrp G ⟶ ofFiniteGrp H :=
   letI : TopologicalSpace G := ⊥
   letI : DiscreteTopology G := ⟨rfl⟩
   letI : IsTopologicalGroup G := {}

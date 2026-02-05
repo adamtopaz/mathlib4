@@ -6941,6 +6941,7 @@ public import Mathlib.Topology.Algebra.Algebra.Equiv
 public import Mathlib.Topology.Algebra.Algebra.Rat
 public import Mathlib.Topology.Algebra.AsymptoticCone
 public import Mathlib.Topology.Algebra.Category.ProfiniteGrp.Basic
+public import Mathlib.Topology.Algebra.Category.ProfiniteGrp.Completion
 public import Mathlib.Topology.Algebra.Category.ProfiniteGrp.Limits
 public import Mathlib.Topology.Algebra.ClopenNhdofOne
 public import Mathlib.Topology.Algebra.ConstMulAction
