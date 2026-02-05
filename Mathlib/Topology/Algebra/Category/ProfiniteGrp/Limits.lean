@@ -41,9 +41,6 @@ open CategoryTheory IsTopologicalGroup
 
 namespace ProfiniteGrp
 
-instance (P : ProfiniteGrp) : SmallCategory (OpenNormalSubgroup P) :=
-  Preorder.smallCategory (OpenNormalSubgroup ↑P.toProfinite.toTop)
-
 /-- The functor from `OpenNormalSubgroup P` to `FiniteGrp` sending `U` to `P ⧸ U`,
 where `P : ProfiniteGrp`. -/
 def toFiniteQuotientFunctor (P : ProfiniteGrp) : OpenNormalSubgroup P ⥤ FiniteGrp where
@@ -53,10 +50,13 @@ def toFiniteQuotientFunctor (P : ProfiniteGrp) : OpenNormalSubgroup P ⥤ Finite
   map_comp f g := ConcreteCategory.ext <| (QuotientGroup.map_comp_map
     _ _ _ (.id _) (.id _) (leOfHom f) (leOfHom g)).symm
 
+@[simps! obj map]
+def diagram (P : ProfiniteGrp.{u}) : OpenNormalSubgroup P ⥤ ProfiniteGrp.{u} := 
+  toFiniteQuotientFunctor P ⋙  forget₂ FiniteGrp ProfiniteGrp
+
 /-- The `MonoidHom` from a profinite group `P` to the projective limit of its quotients by
 open normal subgroups ordered by inclusion -/
-def toLimit_fun (P : ProfiniteGrp.{u}) : P →*
-    limit (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp) where
+def toLimit_fun (P : ProfiniteGrp.{u}) : P →* limit (diagram P) where
   toFun p := ⟨fun _ => QuotientGroup.mk p, fun _ ↦ fun _ _ ↦ rfl⟩
   map_one' := Subtype.val_inj.mp rfl
   map_mul' _ _ := Subtype.val_inj.mp rfl
@@ -79,8 +79,7 @@ lemma toLimit_fun_continuous (P : ProfiniteGrp.{u}) : Continuous (toLimit_fun P)
 
 /-- The morphism in the category of `ProfiniteGrp` from a profinite group `P` to
 the projective limit of its quotients by open normal subgroups ordered by inclusion -/
-def toLimit (P : ProfiniteGrp.{u}) : P ⟶
-    limit (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp) :=
+def toLimit (P : ProfiniteGrp.{u}) : P ⟶ limit (diagram P) := 
   ofHom { toLimit_fun P with
   continuous_toFun := toLimit_fun_continuous P }
 
@@ -126,7 +125,7 @@ theorem toLimit_injective (P : ProfiniteGrp.{u}) : Function.Injective (toLimit P
 /-- The topological group isomorphism between a profinite group and the projective limit of
 its quotients by open normal subgroups -/
 noncomputable def continuousMulEquivLimittoFiniteQuotientFunctor (P : ProfiniteGrp.{u}) :
-    P ≃ₜ* (limit (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)) := {
+    P ≃ₜ* (limit <| diagram P) := {
   (Continuous.homeoOfEquivCompactToT2
     (f := Equiv.ofBijective _ ⟨toLimit_injective P, toLimit_surjective P⟩)
     P.toLimit.hom.continuous_toFun) with
@@ -139,7 +138,26 @@ instance isIso_toLimit (P : ProfiniteGrp.{u}) : IsIso (toLimit P) := by
 /-- The isomorphism in the category of profinite group between a profinite group and
 the projective limit of its quotients by open normal subgroups -/
 noncomputable def isoLimittoFiniteQuotientFunctor (P : ProfiniteGrp.{u}) :
-    P ≅ (limit (toFiniteQuotientFunctor P ⋙ forget₂ FiniteGrp ProfiniteGrp)) :=
+    P ≅ (limit <| diagram P) :=
   ContinuousMulEquiv.toProfiniteGrpIso (continuousMulEquivLimittoFiniteQuotientFunctor P)
 
+def proj {P : ProfiniteGrp.{u}} (U : OpenNormalSubgroup P) : P ⟶ (diagram P).obj U := 
+  ProfiniteGrp.ofHom (Y := (diagram P).obj U) {
+    toFun := QuotientGroup.mk
+    map_one' := rfl
+    map_mul' _ _ := rfl
+    continuous_toFun := show Continuous ((limitCone <| diagram P).π.app U ∘ toLimit P) by 
+      fun_prop
+  }
+
+@[simps]
+def cone (P : ProfiniteGrp.{u}) : Limits.Cone (diagram P) where
+  pt := P
+  π := { app := proj }
+
+noncomputable def isLimitCone (P : ProfiniteGrp.{u}) : Limits.IsLimit P.cone := 
+  Limits.IsLimit.ofIsoLimit (limitConeIsLimit _) <| .symm <| 
+    Limits.Cones.ext (isoLimittoFiniteQuotientFunctor _) fun _ => rfl
+
 end ProfiniteGrp
+
