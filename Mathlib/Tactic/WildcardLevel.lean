@@ -153,7 +153,7 @@ def reorganizeUniverseParams
     (constLevels : Array Level)
     (levelNames : List Name) : List Name := Id.run do
   let mut result := levelNames
-  for ((wildcardKind, elaboratedLevel), idx) in (levels.zip constLevels).zipIdx do
+  for wildcardKind in levels, elaboratedLevel in constLevels, idx in 0...* do
     -- Only process param wildcards that elaborated to param levels
     unless wildcardKind matches .param _ do continue
     let .param newParamName := elaboratedLevel | continue
