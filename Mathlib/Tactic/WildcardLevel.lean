@@ -132,8 +132,7 @@ Reorganizes universe parameter names to ensure proper dependency ordering.
 
 Algorithm:
 * Iterate over universe arguments from left to right.
-* Only act on arguments that were written as a wildcard parameter (`*` or `name*`)
-  and actually elaborated to a `Level.param`.
+* Only act on arguments that were written as a wildcard parameter (`*` or `name*`).
 * For such a parameter name `p` at index `i`, compute `dependencies` as the set of
   level parameter names appearing in the *later* universe arguments
   `constLevels[i+1..]` (excluding `p` itself).
