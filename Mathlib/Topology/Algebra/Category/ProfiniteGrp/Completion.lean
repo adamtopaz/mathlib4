@@ -25,10 +25,10 @@ structure FiniteIndexSubgroup (G : Type*) [Group G] extends Subgroup G where
 instance (G : Type*) [Group G] : Coe (FiniteIndexSubgroup G) (Subgroup G) where
   coe G := G.toSubgroup
 
-instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).Normal := 
+instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).Normal :=
   H.isNormal'
 
-instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).FiniteIndex := 
+instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).FiniteIndex :=
   H.isFiniteIndex'
 
 instance (G : Type*) [Group G] : Preorder (FiniteIndexSubgroup G) where
@@ -125,10 +125,10 @@ def lift (f : G ⟶ GrpCat.of P) : completion G ⟶ P :=
     naturality := by
       intro X Y g
       ext ⟨x,hx⟩
-      change quotientMap f Y (x <| preimage f Y) = 
+      change quotientMap f Y (x <| preimage f Y) =
         P.diagram.map g (quotientMap _ _ <| x <| preimage f X)
       have := hx <| preimage_le (f := f) g.le |>.hom
-      obtain ⟨t, ht⟩ : ∃ g : G, QuotientGroup.mk g = x (preimage f X) := 
+      obtain ⟨t, ht⟩ : ∃ g : G, QuotientGroup.mk g = x (preimage f X) :=
         Quot.exists_rep (x (preimage f X))
       rw [← this, ← ht]
       have := P.cone.π.naturality g
@@ -165,10 +165,10 @@ end ProfiniteCompletion
 noncomputable def profiniteCompletion : GrpCat.{u} ⥤ ProfiniteGrp.{u} where
   obj G := ProfiniteCompletion.completion G
   map f := ProfiniteCompletion.lift <| f ≫ ProfiniteCompletion.eta _
-  map_id G := by 
+  map_id G := by
     apply ProfiniteCompletion.lift_unique
     aesop_cat
-  map_comp f g := by 
+  map_comp f g := by
     apply ProfiniteCompletion.lift_unique
     aesop_cat
 
@@ -188,7 +188,7 @@ noncomputable
 def adjunction : profiniteCompletion ⊣ forget₂ _ _ :=
   Adjunction.mkOfHomEquiv {
     homEquiv := homEquiv
-    homEquiv_naturality_left_symm f g := by 
+    homEquiv_naturality_left_symm f g := by
       apply lift_unique
       simp [homEquiv]
     homEquiv_naturality_right f g := rfl
