@@ -10,8 +10,8 @@ public import Mathlib.Topology.Algebra.Category.ProfiniteGrp.Limits
 /-!
 # Profinite completion of groups
 
-We define the profinite completion of a group as the projective limit of its finite quotients,
-construct the canonical map `eta`, and establish the universal property via an adjunction.
+We define the profinite completion of a group as the limit of its finite quotients, 
+and prove its universal property.
 -/
 
 @[expose] public section
@@ -24,8 +24,8 @@ universe u
 
 /-- A normal subgroup of `G` of finite index. -/
 structure FiniteIndexSubgroup (G : Type*) [Group G] extends Subgroup G where
-  isNormal' : toSubgroup.Normal
-  isFiniteIndex' : toSubgroup.FiniteIndex
+  [isNormal' : toSubgroup.Normal]
+  [isFiniteIndex' : toSubgroup.FiniteIndex]
 
 instance (G : Type*) [Group G] : Coe (FiniteIndexSubgroup G) (Subgroup G) where
   coe G := G.toSubgroup
@@ -75,27 +75,23 @@ lemma denseRange : DenseRange (etaFn G) := by
   rintro U ⟨s, hsO, hsv⟩ ⟨⟨spc, hspc⟩, uDefaultSpec⟩
   simp_rw [← hsv, Set.mem_preimage] at uDefaultSpec
   rcases (isOpen_pi_iff.mp hsO) _ uDefaultSpec with ⟨J, fJ, hJ1, hJ2⟩
-  classical
-  let M : Subgroup G := iInf fun (j : J) => (j.1 : Subgroup G)
-  have hM : M.Normal :=
-    Subgroup.normal_iInf_normal fun j => (inferInstance : (j.1 : Subgroup G).Normal)
+  let M : Subgroup G := iInf fun (j : J) => j.val
+  have hM : M.Normal := Subgroup.normal_iInf_normal fun j => inferInstance 
   have hMFinite : M.FiniteIndex := by
-    simpa [M] using
-      (Subgroup.finiteIndex_iInf (ι := J) (f := fun j : J => (j.1 : Subgroup G))
-        (hf := fun j => (inferInstance : (j.1 : Subgroup G).FiniteIndex)))
-  let m : FiniteIndexSubgroup G := { toSubgroup := M, isNormal' := hM, isFiniteIndex' := hMFinite }
+    apply Subgroup.finiteIndex_iInf
+    infer_instance
+  let m : FiniteIndexSubgroup G := { toSubgroup := M }
   rcases QuotientGroup.mk'_surjective M (spc m) with ⟨origin, horigin⟩
   use etaFn G origin
   refine ⟨?_, origin, rfl⟩
   rw [← hsv]
   apply hJ2
   intro a a_in_J
-  let M_to_Na : m ⟶ a :=
-    (iInf_le (fun (j : J) => (j.1 : Subgroup G)) ⟨a, a_in_J⟩).hom
+  let M_to_Na : m ⟶ a := (iInf_le (fun (j : J) => (j.val.toSubgroup)) ⟨a, a_in_J⟩).hom
   rw [← (etaFn G origin).property M_to_Na]
   change (diagram G).map M_to_Na (QuotientGroup.mk' M origin) ∈ _
   rw [horigin]
-  exact Set.mem_of_eq_of_mem (hspc M_to_Na) (hJ1 a a_in_J).2
+  exact Set.mem_of_eq_of_mem (hspc M_to_Na) (hJ1 a a_in_J).right
 
 variable {G}
 variable {P : ProfiniteGrp.{u}}
@@ -103,14 +99,10 @@ variable {P : ProfiniteGrp.{u}}
 /-- The preimage of an open normal subgroup under a morphism to a profinite group. -/
 def preimage (f : G ⟶ GrpCat.of P) (H : OpenNormalSubgroup P) : FiniteIndexSubgroup G where
   toSubgroup := H.toSubgroup.comap f.hom
-  isNormal' := Subgroup.normal_comap (GrpCat.Hom.hom f)
   isFiniteIndex' := by
-    classical
     let g : G →* (P ⧸ H.toSubgroup) := (QuotientGroup.mk' H.toSubgroup).comp f.hom
     have hker : (H.toSubgroup.comap f.hom) = g.ker := by
-      simpa [g, QuotientGroup.ker_mk'] using
-        (MonoidHom.comap_ker (g := QuotientGroup.mk' H.toSubgroup) (f := f.hom))
-    haveI : Finite g.range := by infer_instance
+      simpa using MonoidHom.comap_ker (g := QuotientGroup.mk' H.toSubgroup) (f := f.hom)
     simpa [hker] using (inferInstance : g.ker.FiniteIndex)
 
 lemma preimage_le {f : G ⟶ GrpCat.of P} {H K : OpenNormalSubgroup P}
@@ -133,7 +125,7 @@ def lift (f : G ⟶ GrpCat.of P) : completion G ⟶ P :=
         P.diagram.map g (quotientMap _ _ <| x <| preimage f X)
       have := hx <| preimage_le (f := f) g.le |>.hom
       obtain ⟨t, ht⟩ : ∃ g : G, QuotientGroup.mk g = x (preimage f X) :=
-        Quot.exists_rep (x (preimage f X))
+        QuotientGroup.mk_surjective (x (preimage f X))
       rw [← this, ← ht]
       have := P.cone.π.naturality g
       apply_fun fun q => q (f t) at this

@@ -241,7 +241,7 @@ def ofFiniteGrpHom {G H : FiniteGrp.{u}} (f : G ⟶ H) : ofFiniteGrp G ⟶ ofFin
 
 set_option backward.privateInPublic true in
 set_option backward.privateInPublic.warn false in
-@[to_additive, simps]
+@[to_additive]
 instance : HasForget₂ FiniteGrp ProfiniteGrp where
   forget₂ :=
   { obj := ofFiniteGrp
