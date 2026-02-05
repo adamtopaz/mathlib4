@@ -161,7 +161,7 @@ def reorganizeUniverseParams
     let dependencies :=
       constLevels.foldr (stop := idx + 1) CollectLevelParams.visitLevel {} |>.params
     -- Remove newParamName from list
-    let currentNames := result.filter (· != newParamName)
+    let currentNames := result.erase newParamName
     -- Find position after last dependency
     let insertPos := currentNames.zipIdx
       |>.findRev? (fun (name, _) => dependencies.contains name)
