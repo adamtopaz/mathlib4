@@ -193,7 +193,7 @@ public def elabAppWithWildcards : TermElab := fun stx expectedType? => withoutEr
       | .explicit l => elabLevel l
 
     -- Create constant expression using Term.mkConst (handles deprecation)
-    let fn ← mkConst constName constLevels.toList
+    let fn ← Term.mkConst constName constLevels.toList
 
     -- Elaborate arguments
     let (namedArgs, args, ellipsis) ← expandArgs args
