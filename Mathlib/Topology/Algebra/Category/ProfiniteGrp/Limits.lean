@@ -80,7 +80,7 @@ lemma toLimit_fun_continuous (P : ProfiniteGrp.{u}) : Continuous (toLimit_fun P)
 
 /-- The morphism in the category of `ProfiniteGrp` from a profinite group `P` to
 the projective limit of its quotients by open normal subgroups ordered by inclusion -/
-def toLimit (P : ProfiniteGrp.{u}) : P ⟶ limit (diagram P) := 
+def toLimit (P : ProfiniteGrp.{u}) : P ⟶ limit (diagram P) :=
   ofHom { toLimit_fun P with
   continuous_toFun := toLimit_fun_continuous P }
 
@@ -148,7 +148,7 @@ def proj {P : ProfiniteGrp.{u}} (U : OpenNormalSubgroup P) : P ⟶ (diagram P).o
     toFun := QuotientGroup.mk
     map_one' := rfl
     map_mul' _ _ := rfl
-    continuous_toFun := show Continuous ((limitCone <| diagram P).π.app U ∘ toLimit P) by 
+    continuous_toFun := show Continuous ((limitCone <| diagram P).π.app U ∘ toLimit P) by
       fun_prop
   }
 
@@ -160,7 +160,7 @@ def cone (P : ProfiniteGrp.{u}) : Limits.Cone (diagram P) where
 
 /-- The canonical cone over `diagram P` is a limit cone. -/
 noncomputable def isLimitCone (P : ProfiniteGrp.{u}) : Limits.IsLimit P.cone :=
-  Limits.IsLimit.ofIsoLimit (limitConeIsLimit _) <| .symm <| 
+  Limits.IsLimit.ofIsoLimit (limitConeIsLimit _) <| .symm <|
     Limits.Cones.ext (isoLimittoFiniteQuotientFunctor _) fun _ => rfl
 
 end ProfiniteGrp
