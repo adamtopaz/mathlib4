@@ -10,6 +10,7 @@ public import Mathlib.RingTheory.Ideal.Defs
 public import Mathlib.Topology.Algebra.Group.Quotient
 public import Mathlib.Topology.Algebra.Ring.Basic
 public import Mathlib.Topology.Sets.Opens
+public import Mathlib.GroupTheory.FiniteIndexNormalSubgroup
 
 /-!
 # Open subgroups of a topological group
@@ -440,10 +441,26 @@ instance instSemilatticeSupOpenNormalSubgroup [ContinuousMul G] :
   toSubgroup_injective.semilatticeSup _ (fun _ _ ↦ rfl)
 
 @[to_additive]
-instance [ContinuousMul G] : Lattice (OpenNormalSubgroup G) :=
-  { instSemilatticeInfOpenNormalSubgroup,
-    instSemilatticeSupOpenNormalSubgroup with
-    toPartialOrder := instPartialOrderOpenNormalSubgroup }
+instance [ContinuousMul G] : Lattice (OpenNormalSubgroup G) where
+
+@[to_additive]
+def toFiniteIndexNormalSubgroup [CompactSpace G] [ContinuousMul G]
+    (H : OpenNormalSubgroup G) : FiniteIndexNormalSubgroup G where
+  toSubgroup := H.toSubgroup
+  isFiniteIndex' := Subgroup.finiteIndex_of_finite_quotient
+
+@[to_additive]
+theorem toFiniteIndexNormalSubgroup_mono [CompactSpace G] [ContinuousMul G]
+    {H K : OpenNormalSubgroup G} (h : H ≤ K) :
+    H.toFiniteIndexNormalSubgroup ≤ K.toFiniteIndexNormalSubgroup :=
+  fun _ hx ↦ h hx
+
+@[to_additive]
+theorem toFiniteIndexNormalSubgroup_injective [CompactSpace G] [ContinuousMul G] :
+    Function.Injective (toFiniteIndexNormalSubgroup (G := G)) := by
+  intro H K h
+  apply toSubgroup_injective
+  exact congrArg (fun L : FiniteIndexNormalSubgroup G ↦ (L : Subgroup G)) h
 
 end OpenNormalSubgroup
 

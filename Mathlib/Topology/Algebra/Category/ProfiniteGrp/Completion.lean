@@ -22,37 +22,19 @@ open CategoryTheory
 
 universe u
 
-/-- A normal subgroup of `G` of finite index. -/
-@[ext]
-structure FiniteIndexSubgroup (G : Type*) [Group G] extends Subgroup G where
-  [isNormal' : toSubgroup.Normal]
-  [isFiniteIndex' : toSubgroup.FiniteIndex]
-
-instance (G : Type*) [Group G] : Coe (FiniteIndexSubgroup G) (Subgroup G) where
-  coe G := G.toSubgroup
-
-instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).Normal :=
-  H.isNormal'
-
-instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).FiniteIndex :=
-  H.isFiniteIndex'
-
-instance (G : Type*) [Group G] : PartialOrder (FiniteIndexSubgroup G) := 
-  PartialOrder.lift FiniteIndexSubgroup.toSubgroup <| fun _ _ _ => by ext; grind
-
 namespace ProfiniteCompletion
 
 variable (G : GrpCat.{u})
 
 /-- The diagram of finite quotients indexed by finite-index normal subgroups of `G`. -/
-def finiteGrpDiagram : FiniteIndexSubgroup G ⥤ FiniteGrp.{u} where
+def finiteGrpDiagram : FiniteIndexNormalSubgroup G ⥤ FiniteGrp.{u} where
   obj H := FiniteGrp.of <| G ⧸ H.toSubgroup
   map f := FiniteGrp.ofHom <| QuotientGroup.map _ _ (MonoidHom.id _) f.le
   map_id H := by ext ⟨x⟩; rfl
   map_comp f g := by ext ⟨x⟩; rfl
 
 /-- The finite-quotient diagram viewed in `ProfiniteGrp`. -/
-def diagram : FiniteIndexSubgroup G ⥤ ProfiniteGrp.{u} :=
+def diagram : FiniteIndexNormalSubgroup G ⥤ ProfiniteGrp.{u} :=
   finiteGrpDiagram _ ⋙ forget₂ _ _
 
 /-- The profinite completion of `G` as a projective limit. -/
@@ -78,7 +60,7 @@ lemma denseRange : DenseRange (etaFn G) := by
   have hMFinite : M.FiniteIndex := by
     apply Subgroup.finiteIndex_iInf
     infer_instance
-  let m : FiniteIndexSubgroup G := { toSubgroup := M }
+  let m : FiniteIndexNormalSubgroup G := { toSubgroup := M }
   rcases QuotientGroup.mk'_surjective M (spc m) with ⟨origin, horigin⟩
   use etaFn G origin
   refine ⟨?_, origin, rfl⟩
@@ -95,16 +77,12 @@ variable {G}
 variable {P : ProfiniteGrp.{u}}
 
 /-- The preimage of an open normal subgroup under a morphism to a profinite group. -/
-def preimage (f : G ⟶ GrpCat.of P) (H : OpenNormalSubgroup P) : FiniteIndexSubgroup G where
-  toSubgroup := H.toSubgroup.comap f.hom
-  isFiniteIndex' := by
-    let g : G →* (P ⧸ H.toSubgroup) := (QuotientGroup.mk' H.toSubgroup).comp f.hom
-    have hker : (H.toSubgroup.comap f.hom) = g.ker := by
-      simpa using MonoidHom.comap_ker (g := QuotientGroup.mk' H.toSubgroup) (f := f.hom)
-    simpa [hker] using (inferInstance : g.ker.FiniteIndex)
+def preimage (f : G ⟶ GrpCat.of P) (H : OpenNormalSubgroup P) : FiniteIndexNormalSubgroup G :=
+  H.toFiniteIndexNormalSubgroup.comap f.hom
 
 lemma preimage_le {f : G ⟶ GrpCat.of P} {H K : OpenNormalSubgroup P}
-    (h : H ≤ K) : preimage f H ≤ preimage f K := fun _ hx => h hx
+    (h : H ≤ K) : preimage f H ≤ preimage f K := 
+  FiniteIndexNormalSubgroup.comap_mono _ h
 
 /-- The induced map on finite quotients coming from a morphism to `P`. -/
 def quotientMap (f : G ⟶ GrpCat.of P) (H : OpenNormalSubgroup P) :
