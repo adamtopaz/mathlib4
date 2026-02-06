@@ -82,7 +82,7 @@ def preimage (f : G ⟶ GrpCat.of P) (H : OpenNormalSubgroup P) : FiniteIndexNor
   H.toFiniteIndexNormalSubgroup.comap f.hom
 
 lemma preimage_le {f : G ⟶ GrpCat.of P} {H K : OpenNormalSubgroup P}
-    (h : H ≤ K) : preimage f H ≤ preimage f K := 
+    (h : H ≤ K) : preimage f H ≤ preimage f K :=
   FiniteIndexNormalSubgroup.comap_mono _ h
 
 /-- The induced map on finite quotients coming from a morphism to `P`. -/
