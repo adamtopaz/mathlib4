@@ -443,11 +443,13 @@ instance instSemilatticeSupOpenNormalSubgroup [ContinuousMul G] :
 @[to_additive]
 instance [ContinuousMul G] : Lattice (OpenNormalSubgroup G) where
 
-@[to_additive]
+/-- An open normal subgroup of a compact topological group has finite index. -/
+@[to_additive
+  /-- An open normal additive subgroup of a compact topological additive group has finite index. -/]
 def toFiniteIndexNormalSubgroup [CompactSpace G] [ContinuousMul G]
-    (H : OpenNormalSubgroup G) : FiniteIndexNormalSubgroup G where
-  toSubgroup := H.toSubgroup
-  isFiniteIndex' := Subgroup.finiteIndex_of_finite_quotient
+    (H : OpenNormalSubgroup G) : FiniteIndexNormalSubgroup G :=
+  letI : H.toSubgroup.FiniteIndex := Subgroup.finiteIndex_of_finite_quotient
+  FiniteIndexNormalSubgroup.ofSubgroup H.toSubgroup
 
 @[to_additive]
 theorem toFiniteIndexNormalSubgroup_mono [CompactSpace G] [ContinuousMul G]
