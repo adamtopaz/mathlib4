@@ -98,6 +98,8 @@ def lift (f : G ⟶ GrpCat.of P) : completion G ⟶ P :=
     naturality := by
       intro X Y g
       ext ⟨x, hx⟩
+      -- TODO: `dsimp` should handle this `change`; investigate missing simp lemmas in the
+      -- `ProfiniteGrp` / `CompHausLike` API.
       change quotientMap f Y (x <| preimage f Y) =
         P.diagram.map g (quotientMap _ _ <| x <| preimage f X)
       have := hx <| preimage_le (f := f) g.le |>.hom

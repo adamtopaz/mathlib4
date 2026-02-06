@@ -57,17 +57,17 @@ def diagram (P : ProfiniteGrp.{u}) : OpenNormalSubgroup P ⥤ ProfiniteGrp.{u} :
 
 /-- The `MonoidHom` from a profinite group `P` to the projective limit of its quotients by
 open normal subgroups ordered by inclusion -/
-def toLimit_fun (P : ProfiniteGrp.{u}) : P →* limit (diagram P) where
+def toLimitFun (P : ProfiniteGrp.{u}) : P →* limit (diagram P) where
   toFun p := ⟨fun _ => QuotientGroup.mk p, fun _ ↦ fun _ _ ↦ rfl⟩
   map_one' := Subtype.val_inj.mp rfl
   map_mul' _ _ := Subtype.val_inj.mp rfl
 
-lemma toLimit_fun_continuous (P : ProfiniteGrp.{u}) : Continuous (toLimit_fun P) := by
+lemma toLimitFun_continuous (P : ProfiniteGrp.{u}) : Continuous (toLimitFun P) := by
   apply continuous_induced_rng.mpr (continuous_pi _)
   intro H
   dsimp only [Functor.comp_obj, CompHausLike.coe_of, Functor.comp_map,
     CompHausLike.toCompHausLike_map, CompHausLike.compHausLikeToTop_map, Set.mem_setOf_eq,
-    toLimit_fun, MonoidHom.coe_mk, OneHom.coe_mk, Function.comp_apply]
+    toLimitFun, MonoidHom.coe_mk, OneHom.coe_mk, Function.comp_apply]
   apply Continuous.mk
   intro s _
   rw [← (Set.biUnion_preimage_singleton QuotientGroup.mk s)]
@@ -81,8 +81,8 @@ lemma toLimit_fun_continuous (P : ProfiniteGrp.{u}) : Continuous (toLimit_fun P)
 /-- The morphism in the category of `ProfiniteGrp` from a profinite group `P` to
 the projective limit of its quotients by open normal subgroups ordered by inclusion -/
 def toLimit (P : ProfiniteGrp.{u}) : P ⟶ limit (diagram P) :=
-  ofHom { toLimit_fun P with
-  continuous_toFun := toLimit_fun_continuous P }
+  ofHom { toLimitFun P with
+  continuous_toFun := toLimitFun_continuous P }
 
 /-- An auxiliary result, superseded by `toLimit_surjective` -/
 theorem denseRange_toLimit (P : ProfiniteGrp.{u}) : DenseRange (toLimit P) := by
