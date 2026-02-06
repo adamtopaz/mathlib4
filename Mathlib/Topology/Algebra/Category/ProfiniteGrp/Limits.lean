@@ -152,7 +152,7 @@ def proj {P : ProfiniteGrp.{u}} (U : OpenNormalSubgroup P) : P ⟶ (diagram P).o
       fun_prop
   }
 
-/-- The canonical cone over `diagram P` with tip `P`. -/
+/-- The canonical cone over `diagram P` with point `P`. -/
 @[simps]
 def cone (P : ProfiniteGrp.{u}) : Limits.Cone (diagram P) where
   pt := P
