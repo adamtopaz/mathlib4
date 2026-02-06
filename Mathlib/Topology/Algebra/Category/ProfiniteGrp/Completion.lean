@@ -23,6 +23,7 @@ open CategoryTheory
 universe u
 
 /-- A normal subgroup of `G` of finite index. -/
+@[ext]
 structure FiniteIndexSubgroup (G : Type*) [Group G] extends Subgroup G where
   [isNormal' : toSubgroup.Normal]
   [isFiniteIndex' : toSubgroup.FiniteIndex]
@@ -36,11 +37,8 @@ instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).No
 instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).FiniteIndex :=
   H.isFiniteIndex'
 
-instance (G : Type*) [Group G] : Preorder (FiniteIndexSubgroup G) where
-  le A B := A.toSubgroup ≤ B.toSubgroup
-  le_refl _ := le_refl _
-  le_trans _ _ _ h1 h2 := le_trans h1 h2
-  lt_iff_le_not_ge _ _ := lt_iff_le_not_ge
+instance (G : Type*) [Group G] : PartialOrder (FiniteIndexSubgroup G) := 
+  PartialOrder.lift FiniteIndexSubgroup.toSubgroup <| fun _ _ _ => by ext; grind
 
 namespace ProfiniteCompletion
 
@@ -73,7 +71,7 @@ def eta : G ⟶ GrpCat.of (completion G) := GrpCat.ofHom {
 lemma denseRange : DenseRange (etaFn G) := by
   apply dense_iff_inter_open.mpr
   rintro U ⟨s, hsO, hsv⟩ ⟨⟨spc, hspc⟩, uDefaultSpec⟩
-  simp_rw [← hsv, Set.mem_preimage] at uDefaultSpec
+  rw [← hsv, Set.mem_preimage] at uDefaultSpec
   rcases (isOpen_pi_iff.mp hsO) _ uDefaultSpec with ⟨J, fJ, hJ1, hJ2⟩
   let M : Subgroup G := iInf fun (j : J) => j.val
   have hM : M.Normal := Subgroup.normal_iInf_normal fun j => inferInstance 
@@ -89,7 +87,7 @@ lemma denseRange : DenseRange (etaFn G) := by
   intro a a_in_J
   let M_to_Na : m ⟶ a := (iInf_le (fun (j : J) => (j.val.toSubgroup)) ⟨a, a_in_J⟩).hom
   rw [← (etaFn G origin).property M_to_Na]
-  change (diagram G).map M_to_Na (QuotientGroup.mk' M origin) ∈ _
+  dsimp [etaFn] at ⊢ horigin
   rw [horigin]
   exact Set.mem_of_eq_of_mem (hspc M_to_Na) (hJ1 a a_in_J).right
 
@@ -120,7 +118,7 @@ def lift (f : G ⟶ GrpCat.of P) : completion G ⟶ P :=
     app H := (limitCone (diagram G)).π.app _ ≫ (ofFiniteGrpHom <| quotientMap f H)
     naturality := by
       intro X Y g
-      ext ⟨x,hx⟩
+      ext ⟨x, hx⟩
       change quotientMap f Y (x <| preimage f Y) =
         P.diagram.map g (quotientMap _ _ <| x <| preimage f X)
       have := hx <| preimage_le (f := f) g.le |>.hom
@@ -144,15 +142,11 @@ lemma lift_eta (f : G ⟶ GrpCat.of P) : eta G ≫ (forget₂ _ _).map (lift f) 
 
 lemma lift_unique (f g : completion G ⟶ P)
     (h : eta G ≫ (forget₂ _ _).map f = eta G ≫ (forget₂ _ _).map g) : f = g := by
-  apply ConcreteCategory.hom_ext
-  intro x
-  have hfg : (fun x => f x) = fun x => g x := by
-    refine (denseRange (G := G)).equalizer ?_ ?_ ?_
-    · exact f.hom.continuous_toFun
-    · exact g.hom.continuous_toFun
-    · funext y
-      simpa [GrpCat.comp_apply] using (CategoryTheory.congr_hom h y)
-  exact congrFun hfg x
+  ext x
+  apply congrFun
+  refine (denseRange (G := G)).equalizer f.hom.continuous_toFun g.hom.continuous_toFun ?_
+  funext y
+  simpa [GrpCat.comp_apply] using (CategoryTheory.congr_hom h y)
 
 end ProfiniteCompletion
 
@@ -163,10 +157,10 @@ noncomputable def profiniteCompletion : GrpCat.{u} ⥤ ProfiniteGrp.{u} where
   map f := ProfiniteCompletion.lift <| f ≫ ProfiniteCompletion.eta _
   map_id G := by
     apply ProfiniteCompletion.lift_unique
-    aesop_cat
+    cat_disch
   map_comp f g := by
     apply ProfiniteCompletion.lift_unique
-    aesop_cat
+    cat_disch
 
 namespace ProfiniteCompletion
 
@@ -187,7 +181,6 @@ def adjunction : profiniteCompletion ⊣ forget₂ _ _ :=
     homEquiv_naturality_left_symm f g := by
       apply lift_unique
       simp [homEquiv]
-    homEquiv_naturality_right f g := rfl
   }
 
 end ProfiniteCompletion

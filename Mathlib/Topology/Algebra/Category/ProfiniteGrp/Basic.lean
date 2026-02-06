@@ -231,13 +231,7 @@ def ofFiniteGrp (G : FiniteGrp) : ProfiniteGrp :=
 @[to_additive /-- A morphism of `FiniteAddGrp` induces a morphism of the associated profinite
 additive groups. -/]
 def ofFiniteGrpHom {G H : FiniteGrp.{u}} (f : G ⟶ H) : ofFiniteGrp G ⟶ ofFiniteGrp H :=
-  letI : TopologicalSpace G := ⊥
-  letI : DiscreteTopology G := ⟨rfl⟩
-  letI : IsTopologicalGroup G := {}
-  letI : TopologicalSpace H := ⊥
-  letI : DiscreteTopology H := ⟨rfl⟩
-  letI : IsTopologicalGroup H := {}
-  ofHom ⟨f.hom.hom, by continuity⟩
+  ConcreteCategory.ofHom ⟨f.hom.hom, by continuity⟩
 
 set_option backward.privateInPublic true in
 set_option backward.privateInPublic.warn false in
