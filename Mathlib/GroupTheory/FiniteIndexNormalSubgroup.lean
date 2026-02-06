@@ -20,17 +20,15 @@ This is used primarily in the definition of the profinite completion of a group.
 
 section
 
-universe u v w
-
 /-- The type of finite-index normal subgroups of a group. -/
 @[ext]
-structure FiniteIndexNormalSubgroup (G : Type u) [Group G] extends Subgroup G where
+structure FiniteIndexNormalSubgroup (G : Type*) [Group G] extends Subgroup G where
   isNormal' : toSubgroup.Normal := by infer_instance
   isFiniteIndex' : toSubgroup.FiniteIndex := by infer_instance
 
 /-- The type of finite-index normal additive subgroups of an additive group. -/
 @[ext]
-structure FiniteIndexNormalAddSubgroup (G : Type u) [AddGroup G] extends AddSubgroup G where
+structure FiniteIndexNormalAddSubgroup (G : Type*) [AddGroup G] extends AddSubgroup G where
   isNormal' : toAddSubgroup.Normal := by infer_instance
   isFiniteIndex' : toAddSubgroup.FiniteIndex := by infer_instance
 
@@ -38,7 +36,7 @@ attribute [to_additive] FiniteIndexNormalSubgroup
 
 namespace FiniteIndexNormalSubgroup
 
-variable {G : Type u} [Group G]
+variable {G : Type*} [Group G]
 
 @[to_additive]
 theorem toSubgroup_injective : Function.Injective
@@ -118,7 +116,7 @@ theorem toSubgroup_ofSubgroup (H : Subgroup G) [H.Normal] [H.FiniteIndex] :
 
 section Comap
 
-variable {H : Type v} {N : Type w} [Group H] [Group N]
+variable {H : Type*} {N : Type*} [Group H] [Group N]
 
 /-- The preimage of a finite-index normal subgroup under a group homomorphism. -/
 @[to_additive
