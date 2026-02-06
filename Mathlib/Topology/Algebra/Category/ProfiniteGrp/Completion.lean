@@ -37,7 +37,7 @@ instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).No
 instance (G : Type*) [Group G] (H : FiniteIndexSubgroup G) : (H : Subgroup G).FiniteIndex :=
   H.isFiniteIndex'
 
-instance (G : Type*) [Group G] : PartialOrder (FiniteIndexSubgroup G) := 
+instance (G : Type*) [Group G] : PartialOrder (FiniteIndexSubgroup G) :=
   PartialOrder.lift FiniteIndexSubgroup.toSubgroup <| fun _ _ _ => by ext; grind
 
 namespace ProfiniteCompletion
