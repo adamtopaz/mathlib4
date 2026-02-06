@@ -10,7 +10,7 @@ public import Mathlib.Topology.Algebra.Category.ProfiniteGrp.Limits
 /-!
 # Profinite completion of groups
 
-We define the profinite completion of a group as the limit of its finite quotients, 
+We define the profinite completion of a group as the limit of its finite quotients,
 and prove its universal property.
 -/
 
@@ -74,7 +74,7 @@ lemma denseRange : DenseRange (etaFn G) := by
   rw [← hsv, Set.mem_preimage] at uDefaultSpec
   rcases (isOpen_pi_iff.mp hsO) _ uDefaultSpec with ⟨J, fJ, hJ1, hJ2⟩
   let M : Subgroup G := iInf fun (j : J) => j.val
-  have hM : M.Normal := Subgroup.normal_iInf_normal fun j => inferInstance 
+  have hM : M.Normal := Subgroup.normal_iInf_normal fun j => inferInstance
   have hMFinite : M.FiniteIndex := by
     apply Subgroup.finiteIndex_iInf
     infer_instance
