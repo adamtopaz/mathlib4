@@ -5,6 +5,7 @@ Authors: Adam Topaz
 -/
 module
 
+public import Mathlib.GroupTheory.FiniteIndexNormalSubgroup
 public import Mathlib.Topology.Algebra.Category.ProfiniteGrp.Limits
 
 /-!
