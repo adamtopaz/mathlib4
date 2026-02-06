@@ -10,7 +10,6 @@ public import Mathlib.RingTheory.Ideal.Defs
 public import Mathlib.Topology.Algebra.Group.Quotient
 public import Mathlib.Topology.Algebra.Ring.Basic
 public import Mathlib.Topology.Sets.Opens
-public import Mathlib.GroupTheory.FiniteIndexNormalSubgroup
 
 /-!
 # Open subgroups of a topological group
@@ -442,27 +441,6 @@ instance instSemilatticeSupOpenNormalSubgroup [ContinuousMul G] :
 
 @[to_additive]
 instance [ContinuousMul G] : Lattice (OpenNormalSubgroup G) where
-
-/-- An open normal subgroup of a compact topological group has finite index. -/
-@[to_additive
-  /-- An open normal additive subgroup of a compact topological additive group has finite index. -/]
-def toFiniteIndexNormalSubgroup [CompactSpace G] [ContinuousMul G]
-    (H : OpenNormalSubgroup G) : FiniteIndexNormalSubgroup G :=
-  letI : H.toSubgroup.FiniteIndex := Subgroup.finiteIndex_of_finite_quotient
-  FiniteIndexNormalSubgroup.ofSubgroup H.toSubgroup
-
-@[to_additive]
-theorem toFiniteIndexNormalSubgroup_mono [CompactSpace G] [ContinuousMul G]
-    {H K : OpenNormalSubgroup G} (h : H ≤ K) :
-    H.toFiniteIndexNormalSubgroup ≤ K.toFiniteIndexNormalSubgroup :=
-  fun _ hx ↦ h hx
-
-@[to_additive]
-theorem toFiniteIndexNormalSubgroup_injective [CompactSpace G] [ContinuousMul G] :
-    Function.Injective (toFiniteIndexNormalSubgroup (G := G)) := by
-  intro H K h
-  apply toSubgroup_injective
-  exact congrArg (fun L : FiniteIndexNormalSubgroup G ↦ (L : Subgroup G)) h
 
 end OpenNormalSubgroup
 

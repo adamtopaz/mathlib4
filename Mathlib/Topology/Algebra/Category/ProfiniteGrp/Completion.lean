@@ -17,6 +17,33 @@ and prove its universal property.
 
 @[expose] public section
 
+namespace OpenNormalSubgroup
+
+variable {G : Type*} [Group G] [TopologicalSpace G]
+
+/-- An open normal subgroup of a compact topological group has finite index. -/
+@[to_additive
+  /-- An open normal additive subgroup of a compact topological additive group has finite index. -/]
+def toFiniteIndexNormalSubgroup [CompactSpace G] [ContinuousMul G]
+    (H : OpenNormalSubgroup G) : FiniteIndexNormalSubgroup G :=
+  letI : H.toSubgroup.FiniteIndex := Subgroup.finiteIndex_of_finite_quotient
+  FiniteIndexNormalSubgroup.ofSubgroup H.toSubgroup
+
+@[to_additive]
+theorem toFiniteIndexNormalSubgroup_mono [CompactSpace G] [ContinuousMul G]
+    {H K : OpenNormalSubgroup G} (h : H ≤ K) :
+    H.toFiniteIndexNormalSubgroup ≤ K.toFiniteIndexNormalSubgroup :=
+  fun _ hx ↦ h hx
+
+@[to_additive]
+theorem toFiniteIndexNormalSubgroup_injective [CompactSpace G] [ContinuousMul G] :
+    Function.Injective (toFiniteIndexNormalSubgroup (G := G)) := by
+  intro H K h
+  apply toSubgroup_injective
+  exact congrArg (fun L : FiniteIndexNormalSubgroup G ↦ (L : Subgroup G)) h
+
+end OpenNormalSubgroup
+
 namespace ProfiniteGrp
 
 open CategoryTheory
